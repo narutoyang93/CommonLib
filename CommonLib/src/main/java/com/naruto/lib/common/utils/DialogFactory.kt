@@ -1,4 +1,4 @@
-package com.naruto.weather.utils
+package com.naruto.lib.common.utils
 
 import android.app.Activity
 import android.content.Context

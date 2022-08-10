@@ -15,7 +15,7 @@ import androidx.core.util.forEach
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.naruto.lib.common.activity.TaskActivity
 import com.naruto.lib.common.base.BaseActivity
-import com.naruto.weather.utils.LogUtils
+import com.naruto.lib.common.utils.LogUtils
 import java.lang.ref.WeakReference
 import java.text.SimpleDateFormat
 import java.util.*

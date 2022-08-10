@@ -25,7 +25,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.LifecycleOwner;
 
 import com.naruto.lib.common.R;
-import com.naruto.weather.utils.DialogFactory;
+import com.naruto.lib.common.utils.DialogFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;

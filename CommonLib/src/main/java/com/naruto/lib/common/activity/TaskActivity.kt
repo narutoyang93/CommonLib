@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.naruto.lib.common.R
 import com.naruto.lib.common.base.BaseActivity
-import com.naruto.weather.utils.LogUtils
+import com.naruto.lib.common.utils.LogUtils
 
 
 class TaskActivity : BaseActivity() {

@@ -1,4 +1,4 @@
-package com.naruto.weather.utils
+package com.naruto.lib.common.utils
 
 import android.Manifest
 import android.app.Activity
@@ -21,6 +21,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.naruto.lib.common.Global
 import com.naruto.lib.common.base.BaseActivity
+import com.naruto.lib.common.utils.LogUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first

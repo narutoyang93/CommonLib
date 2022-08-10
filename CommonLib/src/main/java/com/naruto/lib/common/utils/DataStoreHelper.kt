@@ -1,4 +1,4 @@
-package com.naruto.weather.utils
+package com.naruto.lib.common.utils
 
 import android.content.Context
 import androidx.datastore.core.DataStore

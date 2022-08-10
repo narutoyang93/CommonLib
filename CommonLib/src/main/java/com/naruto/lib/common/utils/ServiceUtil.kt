@@ -6,7 +6,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.annotation.DrawableRes
 import androidx.core.app.NotificationCompat
-import com.naruto.weather.utils.LogUtils.w
+import com.naruto.lib.common.utils.LogUtils.w
 
 /**
  * @Description

@@ -1,4 +1,4 @@
-package com.naruto.weather.utils
+package com.naruto.lib.common.utils
 
 import android.util.Log
 import com.naruto.lib.common.*

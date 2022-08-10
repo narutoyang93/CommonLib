@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.naruto.weather.utils.LogUtils
 
 /**
  * @Description

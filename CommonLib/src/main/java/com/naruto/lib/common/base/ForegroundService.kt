@@ -1,4 +1,4 @@
-package com.naruto.weather.base
+package com.naruto.lib.common.base
 
 import android.app.NotificationManager
 import android.app.PendingIntent
