@@ -35,7 +35,7 @@ abstract class CrashHandler : Thread.UncaughtExceptionHandler {
     }
 
     override fun uncaughtException(t: Thread, e: Throwable) {
-        if (BuildConfig.DEBUG) return
+        if (Global.isDebug) return
         FileUtil.doWithStoragePermission(false) {
             saveLogInfo("crash", e) {
 /*                MyApplication.doByActivity { activity ->
@@ -67,7 +67,7 @@ abstract class CrashHandler : Thread.UncaughtExceptionHandler {
      * @param e
      */
     fun saveExceptionInfo(e: Throwable) {
-        if (!BuildConfig.DEBUG) FileUtil.doWithStoragePermission(false) {
+        if (!Global.isDebug) FileUtil.doWithStoragePermission(false) {
             saveLogInfo("exception", e, null)
         }
     }

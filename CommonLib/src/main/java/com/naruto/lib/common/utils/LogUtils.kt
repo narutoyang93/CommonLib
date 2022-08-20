@@ -14,12 +14,13 @@ import kotlinx.coroutines.launch
  */
 object LogUtils {
     private const val DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss:SSS"
+    private val defTag by lazy { Global.runCatching { appNameEN }.getOrDefault(Global.appName).toString() }
     private val logMap by lazy { mutableMapOf<String, StringBuilder>() }
     private fun log(msg: String, block: ((String, String) -> Unit)) {
         Throwable().stackTrace[2].run {
             //block(className, "$msg[$className.$methodName($fileName:$lineNumber)]")
             val content = "[${toString()}]$msg"
-            if (BuildConfig.DEBUG) block(Global.appNameEN, content)
+            if (Global.isDebug) block(defTag, content)
             else {
                 val stringBuilder = logMap.getOrPut(getTodayDate()) { StringBuilder() }
                 stringBuilder.append("${currentDateTime(DATETIME_FORMAT)} $content\n")
@@ -52,7 +53,7 @@ object LogUtils {
     }
 
     fun writeToFile() {
-        if (BuildConfig.DEBUG) return
+        if (Global.isDebug) return
         CoroutineScope(Dispatchers.IO).launch {
             for ((date, stringBuilder) in logMap) {
                 if (stringBuilder.isNotEmpty()) {

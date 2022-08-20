@@ -65,6 +65,8 @@ object Global {
         }.getOrNull()
     }
 
+    var isDebug: Boolean = true
+
 
     /**
      * 初始化本模块
@@ -77,6 +79,9 @@ object Global {
         getMainModuleContext = { applicationContext }
         registerActivityLifecycleCallbacks(MyActivityLifecycleCallbacks())//监听activity生命周期
         hasInitialized = true
+        isDebug = kotlin.runCatching {
+            Class.forName("$packageName.BuildConfig").getField("DEBUG").get(null) as Boolean
+        }.getOrDefault(true)
     }
 
     fun toast(msg: String) = Toast.makeText(getMainModuleContext(), msg, Toast.LENGTH_SHORT).show()
