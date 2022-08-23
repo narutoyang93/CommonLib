@@ -1,5 +1,6 @@
 package com.naruto.lib.common.base;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -159,6 +160,11 @@ public abstract class BaseActivity extends AppCompatActivity implements BaseView
                                 requestPermissionReason = callBack.permissionMap.get(permission);
                             if (shouldShowRequestPermissionRationale(permission))
                                 shouldShowReasonList.add(permission);
+                        }
+                        if (refuseList.contains(Manifest.permission.ACCESS_FINE_LOCATION)) {//Android 12 定位权限允许单独授权，若已授权ACCESS_COARSE_LOCATION，则拒绝ACCESS_FINE_LOCATION后无需再次询问
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                                refuseList.remove(Manifest.permission.ACCESS_FINE_LOCATION);
+                            }
                         }
                         if (refuseList.isEmpty()) {//全部已授权
                             callBack.onGranted();
