@@ -8,7 +8,7 @@ import com.naruto.lib.common.base.BaseActivity
 import com.naruto.lib.common.utils.LogUtils
 
 
-class TaskActivity : BaseActivity() {
+open class TaskActivity : BaseActivity() {
 
     override fun init() {
 
@@ -28,7 +28,10 @@ class TaskActivity : BaseActivity() {
                         val resultValue = Intent()
                         resultValue.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, it)
                         setResult(RESULT_OK, resultValue)//添加小部件时需要返回值
+                        onAppWidgetLaunching()
                     }
+            } else {
+                LogUtils.w("--->非系统启动")
             }
         }
         isRunning = true
@@ -40,6 +43,11 @@ class TaskActivity : BaseActivity() {
     }
 
     override fun getLayoutRes() = R.layout.activity_task
+
+    /**
+     * 小部件启动时（只有利用TaskActivity启动小部件才会回调）
+     */
+    open fun onAppWidgetLaunching() {}
 
     companion object {
         var isRunning = false
