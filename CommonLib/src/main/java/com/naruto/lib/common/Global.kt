@@ -2,23 +2,16 @@ package com.naruto.lib.common
 
 import android.app.Activity
 import android.app.Application
-import android.app.PendingIntent
-import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.util.SparseArray
 import android.widget.Toast
 import androidx.annotation.DrawableRes
-import androidx.core.util.forEach
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.core.util.valueIterator
 import com.naruto.lib.common.activity.TaskActivity
 import com.naruto.lib.common.base.BaseActivity
 import com.naruto.lib.common.utils.LogUtils
 import java.lang.ref.WeakReference
-import java.text.SimpleDateFormat
-import java.util.*
 
 /**
  * @Description 全局变量及方法
@@ -114,10 +107,27 @@ object Global {
      */
     fun finishAllActivity() {
         val list = mutableListOf<WeakReference<Activity>>()
-        activityMap.forEach { key, value -> list.add(WeakReference(value)) }//Activity finish会触发activityMap执行remove，故不能直接在forEach里面执行finish
+        //Activity finish会触发activityMap执行remove，故不能直接在activityMap的forEach里面执行finish
+        activityMap.valueIterator().forEach { list.add(WeakReference(it)) }
         list.forEach { it.get()?.finish() }
     }
 
+
+    /**
+     * 关闭 TaskActivity
+     */
+    fun finishTaskActivity() {
+        if (operationQueue.isEmpty()) {
+            var activity: Activity? = null
+            activityMap.valueIterator().forEach {
+                if (it is TaskActivity) {
+                    activity = it//Activity finish会触发activityMap执行remove，故不能直接在forEach里面执行finish
+                    return@forEach
+                }
+            }
+            activity?.finish()
+        }
+    }
 
     /**
      * @Description
