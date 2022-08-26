@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- 默认弹窗样式-->
-    <style name="DefaultDialogStyle" parent="Theme.AppCompat.Light.Dialog">
+    <style name="DefaultDialogStyle" parent="Theme.MaterialComponents.DayNight.Dialog">
         <!-- 窗口背景色（透明）-->
         <item name="android:windowBackground">@android:color/transparent</item>
         <!--是否有覆盖-->
@@ -18,7 +18,7 @@
         <item name="android:windowIsTranslucent">true</item>
     </style>
 
-    <style name="dialog_transparent" parent="Theme.AppCompat.Light.Dialog.Alert">
+    <style name="dialog_transparent" parent="Theme.MaterialComponents.DayNight.Dialog">
         <!-- 窗口背景色（透明）-->
         <item name="android:windowBackground">@android:color/transparent</item>
     </style>
