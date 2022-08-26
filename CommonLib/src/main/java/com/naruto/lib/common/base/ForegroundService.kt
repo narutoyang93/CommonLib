@@ -7,8 +7,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.naruto.lib.common.Global
-import com.naruto.lib.common.base.BaseService
-import com.naruto.lib.common.isDomesticRom
+import com.naruto.lib.common.TopFunction.isDomesticRom
 import com.naruto.lib.common.utils.ServiceUtil
 
 
