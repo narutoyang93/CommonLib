@@ -155,6 +155,8 @@ object Global {
  * @receiver Application
  */
 fun Application.commonLibInit() {
+    if (hasInitialized) return
+    hasInitialized = true
     object : CrashHandler() {
         override fun getContext(): Context = applicationContext
     }.init()
@@ -164,3 +166,5 @@ fun Application.commonLibInit() {
         Class.forName("$packageName.BuildConfig").getField("DEBUG").get(null) as Boolean
     }.getOrDefault(true)
 }
+
+private var hasInitialized = false
