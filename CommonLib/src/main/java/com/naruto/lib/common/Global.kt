@@ -20,7 +20,6 @@ import java.lang.ref.WeakReference
  * @Note
  */
 object Global {
-    private var hasInitialized = false
     private var currentActivity: WeakReference<Activity>? = null
     private val activityMap by lazy { SparseArray<Activity>() }
     private var mActivityStartCount = 0 //Activity 启动数量
@@ -59,23 +58,6 @@ object Global {
     }
 
     var isDebug: Boolean = true
-
-
-    /**
-     * 初始化本模块
-     * @receiver Application
-     */
-    fun Application.commonLibInit() {
-        object : CrashHandler() {
-            override fun getContext(): Context = applicationContext
-        }.init()
-        getMainModuleContext = { applicationContext }
-        registerActivityLifecycleCallbacks(MyActivityLifecycleCallbacks())//监听activity生命周期
-        hasInitialized = true
-        isDebug = kotlin.runCatching {
-            Class.forName("$packageName.BuildConfig").getField("DEBUG").get(null) as Boolean
-        }.getOrDefault(true)
-    }
 
     fun toast(msg: String) = Toast.makeText(getMainModuleContext(), msg, Toast.LENGTH_SHORT).show()
 
@@ -125,7 +107,7 @@ object Global {
                     return@forEach
                 }
             }
-            activity?.finish()
+            activity?.finish().run { LogUtils.i("--->") }
         }
     }
 
@@ -149,8 +131,7 @@ object Global {
             LogUtils.i("--->activity=$activity")
             currentActivity = WeakReference(activity) //记录当前正在活动的activity
             while (operationQueue.isNotEmpty()) {
-                operationQueue[0].invoke(activity as BaseActivity)
-                operationQueue.removeAt(0)
+                operationQueue.removeAt(0).invoke(activity as BaseActivity)
             }
         }
 
@@ -167,4 +148,19 @@ object Global {
             currentActivity = null
         }
     }
+}
+
+/**
+ * 初始化本模块
+ * @receiver Application
+ */
+fun Application.commonLibInit() {
+    object : CrashHandler() {
+        override fun getContext(): Context = applicationContext
+    }.init()
+    Global.getMainModuleContext = { applicationContext }
+    registerActivityLifecycleCallbacks(Global.MyActivityLifecycleCallbacks())//监听activity生命周期
+    Global.isDebug = kotlin.runCatching {
+        Class.forName("$packageName.BuildConfig").getField("DEBUG").get(null) as Boolean
+    }.getOrDefault(true)
 }
