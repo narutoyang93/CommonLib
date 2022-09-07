@@ -135,18 +135,18 @@ public abstract class BaseActivity extends AppCompatActivity implements BaseView
     /**
      * 检查并申请权限
      *
-     * @param callBack
+     * @param callback
      */
-    public void doWithPermission(RequestPermissionsCallBack callBack) {
+    public void doWithPermission(RequestPermissionsCallback callback) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {//6.0以下系统无需动态申请权限
-            if (callBack != null) callBack.onGranted();
+            if (callback != null) callback.onGranted();
             return;
         }
         //检查权限
-        List<String> requestPermissionsList = checkPermissions(callBack.getRequestPermissions());//记录需要申请的权限
+        List<String> requestPermissionsList = checkPermissions(callback.getRequestPermissions());//记录需要申请的权限
         if (requestPermissionsList.isEmpty()) {//均已授权
-            callBack.onGranted();
-        } else if (callBack.autoRequest) {//申请
+            callback.onGranted();
+        } else if (callback.autoRequest) {//申请
             String[] requestPermissionsArray = requestPermissionsList.toArray(new String[requestPermissionsList.size()]);
             requestPermissions(requestPermissionsArray, result -> {
                         List<String> refuseList = new ArrayList<>();//被拒绝的权限
@@ -157,7 +157,7 @@ public abstract class BaseActivity extends AppCompatActivity implements BaseView
                             if (entry.getValue()) continue;
                             refuseList.add(permission = entry.getKey());
                             if (TextUtils.isEmpty(requestPermissionReason))
-                                requestPermissionReason = callBack.permissionMap.get(permission);
+                                requestPermissionReason = callback.permissionMap.get(permission);
                             if (shouldShowRequestPermissionRationale(permission))
                                 shouldShowReasonList.add(permission);
                         }
@@ -167,15 +167,15 @@ public abstract class BaseActivity extends AppCompatActivity implements BaseView
                             }
                         }
                         if (refuseList.isEmpty()) {//全部已授权
-                            callBack.onGranted();
+                            callback.onGranted();
                         } else {//被拒绝
                             if (TextUtils.isEmpty(requestPermissionReason)) {
-                                callBack.onDenied(this, refuseList);//直接执行拒绝后的操作
+                                callback.onDenied(this, refuseList);//直接执行拒绝后的操作
                             } else {//弹窗
                                 if (shouldShowReasonList.isEmpty()) //被设置“不再询问”
-                                    showGoToSettingPermissionDialog(callBack, refuseList, requestPermissionReason);//弹窗引导前往设置页面
+                                    showGoToSettingPermissionDialog(callback, refuseList, requestPermissionReason);//弹窗引导前往设置页面
                                 else
-                                    showPermissionRequestReasonDialog(callBack, refuseList, requestPermissionReason);//弹窗显示申请原因并重新请求权限
+                                    showPermissionRequestReasonDialog(callback, refuseList, requestPermissionReason);//弹窗显示申请原因并重新请求权限
                             }
                         }
                     }
@@ -222,7 +222,7 @@ public abstract class BaseActivity extends AppCompatActivity implements BaseView
      * @return
      */
     @RequiresApi(api = Build.VERSION_CODES.M)
-    public AlertDialog showGoToSettingPermissionDialog(RequestPermissionsCallBack callback, List<String> deniedPermissions, String requestPermissionReason) {
+    public AlertDialog showGoToSettingPermissionDialog(RequestPermissionsCallback callback, List<String> deniedPermissions, String requestPermissionReason) {
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
         Uri uri = Uri.fromParts("package", getPackageName(), null);
         intent.setData(uri);
@@ -249,7 +249,7 @@ public abstract class BaseActivity extends AppCompatActivity implements BaseView
      * @param callback
      * @return
      */
-    public AlertDialog showPermissionRequestReasonDialog(RequestPermissionsCallBack callback, List<String> deniedPermissions, String requestPermissionReason) {
+    public AlertDialog showPermissionRequestReasonDialog(RequestPermissionsCallback callback, List<String> deniedPermissions, String requestPermissionReason) {
         DialogFactory.DialogData dialogData = new DialogFactory.DialogData();
         dialogData.setTitle("提示");
         dialogData.setContent(requestPermissionReason);
@@ -296,14 +296,14 @@ public abstract class BaseActivity extends AppCompatActivity implements BaseView
      * @CreateDate 2019/12/19
      * @Note
      */
-    public static abstract class RequestPermissionsCallBack {
+    public static abstract class RequestPermissionsCallback {
         public Map<String, String> permissionMap = new HashMap<>();//key为权限，value为申请原因
         public boolean autoRequest = true;//是否自动申请权限
 
         /**
          * @param permissionMap //key为申请原因,value为权限数组
          */
-        public RequestPermissionsCallBack(Map<String, String[]> permissionMap) {
+        public RequestPermissionsCallback(Map<String, String[]> permissionMap) {
             for (Map.Entry<String, String[]> entry : permissionMap.entrySet()) {
                 for (String permission : entry.getValue()) {
                     this.permissionMap.put(permission, entry.getKey());
@@ -315,7 +315,7 @@ public abstract class BaseActivity extends AppCompatActivity implements BaseView
         /**
          * @param permissionPairs pair(申请理由，权限)
          */
-        public RequestPermissionsCallBack(Pair<String, String[]>... permissionPairs) {
+        public RequestPermissionsCallback(Pair<String, String[]>... permissionPairs) {
             for (Pair<String, String[]> pair : permissionPairs) {
                 for (String s : pair.second) {
                     permissionMap.put(s, pair.first);
@@ -323,7 +323,7 @@ public abstract class BaseActivity extends AppCompatActivity implements BaseView
             }
         }
 
-        public RequestPermissionsCallBack(String[] permissions) {
+        public RequestPermissionsCallback(String[] permissions) {
             for (String p : permissions) {
                 permissionMap.put(p, null);
             }

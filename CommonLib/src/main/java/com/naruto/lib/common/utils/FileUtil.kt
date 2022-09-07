@@ -21,7 +21,6 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.naruto.lib.common.Global
 import com.naruto.lib.common.base.BaseActivity
-import com.naruto.lib.common.utils.LogUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -558,7 +557,7 @@ object FileUtil {
      * @param operation
      */
     fun doWithStoragePermission(autoRequest: Boolean = true, operation: () -> Unit) {
-        Global.doWithPermission(object : BaseActivity.RequestPermissionsCallBack(
+        Global.doWithPermission(object : BaseActivity.RequestPermissionsCallback(
             Pair(null, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE))
         ) {
             override fun onGranted() = operation()

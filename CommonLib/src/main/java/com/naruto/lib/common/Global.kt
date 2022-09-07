@@ -78,10 +78,10 @@ object Global {
     /**
      * 执行需要权限的操作
      *
-     * @param callBack
+     * @param callback
      */
-    fun doWithPermission(callBack: BaseActivity.RequestPermissionsCallBack) {
-        doByActivity { activity -> activity.doWithPermission(callBack) }
+    fun doWithPermission(callback: BaseActivity.RequestPermissionsCallback) {
+        doByActivity { activity -> activity.doWithPermission(callback) }
     }
 
     /**
