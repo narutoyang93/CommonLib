@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <style name="NativeDialogStyle" parent="Theme.MaterialComponents.DayNight.Dialog">
+
+    </style>
     <!-- 默认弹窗样式-->
-    <style name="DefaultDialogStyle" parent="Theme.MaterialComponents.DayNight.Dialog">
+    <style name="DefaultDialogStyle" parent="NativeDialogStyle">
         <!-- 窗口背景色（透明）-->
         <item name="android:windowBackground">@android:color/transparent</item>
         <!--是否有覆盖-->

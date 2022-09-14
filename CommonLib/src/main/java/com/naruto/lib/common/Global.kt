@@ -11,6 +11,7 @@ import androidx.annotation.DrawableRes
 import androidx.core.util.valueIterator
 import com.naruto.lib.common.activity.TaskActivity
 import com.naruto.lib.common.base.BaseActivity
+import com.naruto.lib.common.helper.PermissionHelper
 import com.naruto.lib.common.utils.LogUtils
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
@@ -102,7 +103,7 @@ object Global {
      *
      * @param callback
      */
-    fun doWithPermission(callback: BaseActivity.RequestPermissionsCallback) {
+    fun doWithPermission(callback: PermissionHelper.RequestPermissionsCallback) {
         doByActivity { activity -> activity.doWithPermission(callback) }
     }
 

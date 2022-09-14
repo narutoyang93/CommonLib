@@ -1,7 +1,7 @@
 package com.naruto.lib.common.utils
 
-import android.app.Activity
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.text.TextUtils
 import android.view.Gravity
@@ -14,7 +14,7 @@ import androidx.annotation.LayoutRes
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import com.naruto.lib.common.R
-import com.naruto.lib.common.base.BaseActivity
+import com.naruto.lib.common.base.ContextBridge
 
 /**
  * @Description 构建弹窗
@@ -33,7 +33,7 @@ class DialogFactory {
          * @return
          */
         fun showHintDialog(
-            activity: Activity,
+            context: Context,
             message: String?,
             messageResId: Int = -1,
             contentGravityCenter: Boolean = true,
@@ -41,7 +41,7 @@ class DialogFactory {
             onConfirmListener: View.OnClickListener? = null
         ): AlertDialog {
             val dialog = makeSimpleDialog(
-                activity, R.layout.dialog_hint, contentResId = messageResId, content = message,
+                context, R.layout.dialog_hint, contentResId = messageResId, content = message,
                 confirmText = confirmText, confirmListener = onConfirmListener,
                 contentGravityCenter = contentGravityCenter
             )
@@ -60,13 +60,16 @@ class DialogFactory {
          * @return
          */
         fun makeGoSettingDialog(
-            activity: BaseActivity, message: String, intent: Intent, onCancel: () -> Unit,
-            activityResultCallback: ActivityResultCallback<ActivityResult?>?
+            contextBridge: ContextBridge, message: String, intent: Intent, onCancel: () -> Unit,
+            activityResultCallback: ActivityResultCallback<ActivityResult>
         ): AlertDialog {
-            return makeSimpleDialog(activity, title = "提示", content = message, confirmText = "去设置",
+            return makeSimpleDialog(contextBridge.context,
+                title = "提示",
+                content = message,
+                confirmText = "去设置",
                 cancelListener = { onCancel() },
                 confirmListener = {
-                    activity.startActivityForResult(intent, activityResultCallback)
+                    contextBridge.starActivityForResult(intent, activityResultCallback)
                 })
         }
 
@@ -152,6 +155,36 @@ class DialogFactory {
             setOnClickListener(dialog, view, R.id.btn_confirm, confirmListener)
             viewProcessor?.invoke(dialog, view)
             return dialog
+        }
+
+
+        /**
+         * 显示原生弹窗
+         *
+         * @param context
+         * @param title
+         * @param content
+         * @param cancelText
+         * @param confirmText
+         * @param onCancel
+         * @param onConfirm
+         */
+        fun showNativeDialog(
+            context: Context, title: String, content: String, cancelText: String,
+            confirmText: String, onCancel: Runnable, onConfirm: Runnable
+        ) {
+            AlertDialog.Builder(context, R.style.NativeDialogStyle)
+                .setTitle(title)
+                .setMessage(content)
+                .setCancelable(false)
+                .setNegativeButton(cancelText) { dialog: DialogInterface, which: Int ->
+                    dialog.dismiss()
+                    onCancel.run()
+                }
+                .setPositiveButton(confirmText) { dialog: DialogInterface, which: Int ->
+                    dialog.dismiss()
+                    onConfirm.run()
+                }.create().show()
         }
 
         /**
