@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.os.Bundle
+import android.os.Looper
 import android.util.SparseArray
 import android.widget.Toast
 import androidx.annotation.DrawableRes
@@ -11,6 +12,8 @@ import androidx.core.util.valueIterator
 import com.naruto.lib.common.activity.TaskActivity
 import com.naruto.lib.common.base.BaseActivity
 import com.naruto.lib.common.utils.LogUtils
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
 
 /**
@@ -59,7 +62,26 @@ object Global {
 
     var isDebug: Boolean = true
 
-    fun toast(msg: String) = Toast.makeText(getMainModuleContext(), msg, Toast.LENGTH_SHORT).show()
+    fun toast(msg: String, shortDuration: Boolean = true) {
+        val toast = Toast.makeText(
+            getMainModuleContext(), msg,
+            if (shortDuration) Toast.LENGTH_SHORT else Toast.LENGTH_LONG
+        )
+        runOnMainThread { toast.show() }
+    }
+
+    /**
+     * 当前是否处于主线程
+     *
+     * @return
+     */
+    fun isMainThread(): Boolean {
+        return Looper.myLooper() == Looper.getMainLooper()
+    }
+
+    fun runOnMainThread(block: () -> Unit) {
+        if (isMainThread()) block() else MainScope().launch { block }
+    }
 
     /**
      * 利用当前活动的Activity执行操作
@@ -72,7 +94,7 @@ object Global {
         if (activity == null) {
             operationQueue.add(operation)
             TaskActivity.launch(getMainModuleContext())
-        } else operation(activity as BaseActivity)
+        } else runOnMainThread { operation(activity as BaseActivity) }
     }
 
     /**

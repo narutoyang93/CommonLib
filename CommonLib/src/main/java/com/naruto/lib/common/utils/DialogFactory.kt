@@ -60,7 +60,7 @@ class DialogFactory {
          * @return
          */
         fun makeGoSettingDialog(
-            activity: BaseActivity, message: String?, intent: Intent?, onCancel: () -> Unit,
+            activity: BaseActivity, message: String, intent: Intent, onCancel: () -> Unit,
             activityResultCallback: ActivityResultCallback<ActivityResult?>?
         ): AlertDialog {
             return makeSimpleDialog(activity, title = "提示", content = message, confirmText = "去设置",
