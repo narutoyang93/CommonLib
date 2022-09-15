@@ -10,14 +10,23 @@ import android.os.Build;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Pair;
+import android.util.SparseArray;
 import android.widget.Toast;
 
+import androidx.activity.ComponentActivity;
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 
 import com.naruto.lib.common.base.ContextBridge;
 import com.naruto.lib.common.utils.DialogFactory;
+import com.naruto.lib.common.utils.LogUtils;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -48,7 +57,7 @@ public abstract class PermissionHelper implements ContextBridge {
         if (requestPermissionsList.isEmpty()) {//均已授权
             callback.onGranted();
         } else if (callback.autoRequest) {//申请
-            String[] requestPermissionsArray = requestPermissionsList.toArray(new String[requestPermissionsList.size()]);
+            String[] requestPermissionsArray = requestPermissionsList.toArray(new String[0]);
             requestPermissions(requestPermissionsArray, result -> {
                         Context context = getContext();
                         List<String> refuseList = new ArrayList<>();//被拒绝的权限
@@ -115,7 +124,7 @@ public abstract class PermissionHelper implements ContextBridge {
         intent.setData(uri);
 
         DialogFactory.Companion.makeGoSettingDialog(this
-                , requestPermissionReason + "，是否前往设置？", intent
+                , "提示", requestPermissionReason + "，是否前往设置？", intent
                 , () -> {
                     callback.onDenied(getContext(), deniedPermissions);
                     return Unit.INSTANCE;
@@ -173,6 +182,7 @@ public abstract class PermissionHelper implements ContextBridge {
         /**
          * @param permissionPairs pair(申请理由，权限)
          */
+        @SafeVarargs
         public RequestPermissionsCallback(Pair<String, String[]>... permissionPairs) {
             for (Pair<String, String[]> pair : permissionPairs) {
                 for (String s : pair.second) {
@@ -209,5 +219,160 @@ public abstract class PermissionHelper implements ContextBridge {
             Toast.makeText(context, "授权失败", Toast.LENGTH_SHORT).show();
         }
 
+    }
+
+
+    /**
+     * @Description
+     * @Author Naruto Yang
+     * @CreateDate 2022/9/15 0015
+     * @Note
+     */
+    public static abstract class ActivityPermissionHelper<T extends Activity> extends PermissionHelper {
+        private final WeakReference<T> activityWF;
+
+        public ActivityPermissionHelper(T activity) {
+            activityWF = new WeakReference<>(activity);
+        }
+
+        public void doWithActivity(Operation<T> operation, @NonNull Runnable onActivityNotFound) {
+            if (activityWF.get() == null) onActivityNotFound.run();
+            else operation.execute(activityWF.get());
+        }
+
+        @NonNull
+        @Override
+        public Context getContext() {
+            return activityWF.get();
+        }
+    }
+
+
+    /**
+     * @Description
+     * @Author Naruto Yang
+     * @CreateDate 2022/9/15 0015
+     * @Note 需在OnResume前初始化
+     */
+    public static class NormalActivityPermissionHelper extends ActivityPermissionHelper<ComponentActivity> {
+        private final ActivityResultLauncher<String[]> permissionLauncher;//权限申请启动器
+        private ActivityResultCallback<Map<String, Boolean>> permissionCallback;//权限申请回调
+        private final ActivityResultLauncher<Intent> activityLauncher;//Activity启动器
+        private ActivityResultCallback<ActivityResult> activityCallback;//Activity启动回调
+
+        public NormalActivityPermissionHelper(ComponentActivity activity) {
+            super(activity);
+            //注册权限申请启动器
+            permissionLauncher = activity.registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(),
+                    result -> {
+                        permissionCallback.onActivityResult(result);
+                        permissionCallback = null;
+                    });
+
+            //注册权限申请启动器
+            activityLauncher = activity.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+                    result -> {//Android 12及以上，跳转到设置页面后，在设置界面可以改变位置信息使用权，如果从确切位置降级到大致位置，系统会重启应用的进程，则activityCallback==null。但依旧会走到这里，故需判断activityCallback是否为空
+                        if (activityCallback != null) {
+                            activityCallback.onActivityResult(result);
+                            activityCallback = null;
+                        }
+                    });
+        }
+
+        @Override
+        public void requestPermissions(@NonNull String[] permissions, @NonNull ActivityResultCallback<Map<String, Boolean>> callback) {
+            if (permissionCallback != null) {
+                LogUtils.INSTANCE.e("--->requestPermissions: ", new Exception("permissionCallback!=null"));
+                return;
+            }
+
+            permissionCallback = callback;
+            permissionLauncher.launch(permissions);
+        }
+
+        @Override
+        public void starActivityForResult(@NonNull Intent intent, @NonNull ActivityResultCallback<ActivityResult> callback) {
+            if (activityCallback != null) {
+                LogUtils.INSTANCE.e("--->startActivityForResult: ", new Exception("ActivityCallback!=null"));
+                return;
+            }
+
+            activityCallback = callback;
+            activityLauncher.launch(intent);
+        }
+    }
+
+
+    /**
+     * @Description
+     * @Author Naruto Yang
+     * @CreateDate 2022/9/9 0009
+     * @Note 需要在Activity的onActivityResult和onRequestPermissionsResult里调用LegacyActivityPermissionHelper中对应方法
+     */
+    public static class LegacyActivityPermissionHelper extends ActivityPermissionHelper<Activity> {
+        private final SparseArray<ActivityResultCallback<ActivityResult>> activityResultCallbackQueue = new SparseArray<>();
+        private final SparseArray<ActivityResultCallback<Map<String, Boolean>>> permissionsResultCallbackQueue = new SparseArray<>();
+
+        public LegacyActivityPermissionHelper(Activity activity) {
+            super(activity);
+        }
+
+        @Override
+        @RequiresApi(api = Build.VERSION_CODES.M)
+        public void requestPermissions(@NonNull String[] permissions, @NonNull ActivityResultCallback<Map<String, Boolean>> callback) {
+            doWithActivity(activity -> {
+                final int requestCode = createRequestCode();
+                permissionsResultCallbackQueue.put(requestCode, callback);
+                activity.requestPermissions(permissions, requestCode);
+            }, () -> {
+                Map<String, Boolean> map = new HashMap<>();
+                for (String permission : permissions) {
+                    map.put(permission, false);
+                }
+                callback.onActivityResult(map);
+            });
+        }
+
+
+        @Override
+        public void starActivityForResult(@NonNull Intent intent, @NonNull androidx.activity.result.ActivityResultCallback<ActivityResult> callback) {
+            doWithActivity(activity -> {
+                int requestCode = createRequestCode();
+                activityResultCallbackQueue.put(requestCode, callback);
+                activity.startActivityForResult(intent, requestCode);
+            }, () -> callback.onActivityResult(new ActivityResult(Activity.RESULT_CANCELED, null)));
+        }
+
+        private int createRequestCode() {
+            return (int) (System.currentTimeMillis() / 1000);
+        }
+
+        public void onActivityResult(int requestCode, int resultCode, Intent data) {
+            ActivityResultCallback<ActivityResult> callback = activityResultCallbackQueue.get(requestCode);
+            if (callback == null) return;
+            callback.onActivityResult(new ActivityResult(resultCode, data));
+            activityResultCallbackQueue.remove(requestCode);
+        }
+
+        public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+            ActivityResultCallback<Map<String, Boolean>> callback = permissionsResultCallbackQueue.get(requestCode);
+            if (callback == null) return;
+            Map<String, Boolean> map = new HashMap<>();
+            for (int i = 0; i < permissions.length; i++) {
+                map.put(permissions[i], grantResults[i] == PackageManager.PERMISSION_GRANTED);
+            }
+            callback.onActivityResult(map);
+            permissionsResultCallbackQueue.remove(requestCode);
+        }
+    }
+
+    /**
+     * @Description
+     * @Author Naruto Yang
+     * @CreateDate 2022/9/7 0007
+     * @Note
+     */
+    public interface Operation<T> {
+        void execute(T t);
     }
 }

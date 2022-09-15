@@ -60,11 +60,11 @@ class DialogFactory {
          * @return
          */
         fun makeGoSettingDialog(
-            contextBridge: ContextBridge, message: String, intent: Intent, onCancel: () -> Unit,
-            activityResultCallback: ActivityResultCallback<ActivityResult>
+            contextBridge: ContextBridge, title: String, message: String, intent: Intent,
+            onCancel: () -> Unit, activityResultCallback: ActivityResultCallback<ActivityResult>
         ): AlertDialog {
             return makeSimpleDialog(contextBridge.context,
-                title = "提示",
+                title = title,
                 content = message,
                 confirmText = "去设置",
                 cancelListener = { onCancel() },
