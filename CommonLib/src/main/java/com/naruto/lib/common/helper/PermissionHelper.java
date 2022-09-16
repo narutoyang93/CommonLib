@@ -101,7 +101,7 @@ public abstract class PermissionHelper implements ContextBridge {
      * @return
      */
     @RequiresApi(api = Build.VERSION_CODES.M)
-    protected List<String> checkPermissions(String... permissions) {
+    public List<String> checkPermissions(String... permissions) {
         List<String> list = new ArrayList<>();
         for (String p : permissions) {
             if (getContext().checkSelfPermission(p) != PackageManager.PERMISSION_GRANTED) {//未授权，记录下来
@@ -235,7 +235,7 @@ public abstract class PermissionHelper implements ContextBridge {
             activityWF = new WeakReference<>(activity);
         }
 
-        public void doWithActivity(Operation<T> operation, @NonNull Runnable onActivityNotFound) {
+        public void doWithActivity(@NonNull Operation<T> operation, @NonNull Runnable onActivityNotFound) {
             if (activityWF.get() == null) onActivityNotFound.run();
             else operation.execute(activityWF.get());
         }
