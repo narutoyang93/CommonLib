@@ -74,7 +74,7 @@ public abstract class BaseActivity extends AppCompatActivity implements BaseView
      */
     public void showLoadingDialog(String msg) {
         if (loadingDialog == null) {
-            loadingDialog = DialogFactory.Companion.makeSimpleDialog(this, R.layout.dialog_loading);
+            loadingDialog = DialogFactory.Companion.createDialog(this, R.layout.dialog_loading, null, R.style.LoadingDialogStyle);
             loadingDialog.getWindow().setDimAmount(0f);//移除遮罩层
             loadingDialog.setCancelable(false);
         }

@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="hint_loading">加载中…</string>
+    <string name="text_cancel">取消</string>
+    <string name="text_confirm">确定</string>
+    <string name="text_go_to_setting">去设置</string>
+    <string name="text_grant">授予</string>
+    <string name="dialog_title_def">提示</string>
 </resources>

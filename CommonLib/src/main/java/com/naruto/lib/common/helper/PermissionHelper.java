@@ -22,6 +22,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 
+import com.naruto.lib.common.NormalText;
+import com.naruto.lib.common.R;
+import com.naruto.lib.common.ResText;
 import com.naruto.lib.common.base.ContextBridge;
 import com.naruto.lib.common.utils.DialogFactory;
 import com.naruto.lib.common.utils.LogUtils;
@@ -123,8 +126,8 @@ public abstract class PermissionHelper implements ContextBridge {
         Uri uri = Uri.fromParts("package", getContext().getPackageName(), null);
         intent.setData(uri);
 
-        DialogFactory.Companion.makeGoSettingDialog(this
-                , "提示", requestPermissionReason + "，是否前往设置？", intent
+        DialogFactory.Companion.createGoSettingDialog(this, new ResText(R.string.dialog_title_def),
+                new NormalText(requestPermissionReason + "，是否前往设置？"), intent
                 , () -> {
                     callback.onDenied(getContext(), deniedPermissions);
                     return Unit.INSTANCE;
@@ -145,14 +148,11 @@ public abstract class PermissionHelper implements ContextBridge {
      * @return
      */
     private void showPermissionRequestReasonDialog(RequestPermissionsCallback callback, List<String> deniedPermissions, String requestPermissionReason) {
-        DialogFactory.DialogData dialogData = new DialogFactory.DialogData();
-        dialogData.setTitle("提示");
-        dialogData.setContent(requestPermissionReason);
-        dialogData.setCancelText("取消");
-        dialogData.setConfirmText("授予");
-        dialogData.setCancelListener((v) -> callback.onDenied(getContext(), deniedPermissions));
-        dialogData.setConfirmListener((v) -> doWithPermission(callback));
-        AlertDialog dialog = DialogFactory.Companion.makeSimpleDialog(getContext(), dialogData);
+        DialogFactory.ActionDialogOption dialogData = new DialogFactory.ActionDialogOption(new NormalText(requestPermissionReason), new ResText(R.string.text_grant));
+        dialogData.setTitle(new ResText(R.string.dialog_title_def));
+        dialogData.setCancelListener((view, dialog) -> callback.onDenied(getContext(), deniedPermissions));
+        dialogData.setConfirmListener((view, dialog) -> doWithPermission(callback));
+        AlertDialog dialog = DialogFactory.Companion.createActionDialog(getContext(), dialogData);
         dialog.show();
     }
 
