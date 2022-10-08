@@ -5,9 +5,8 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import androidx.annotation.DrawableRes
 import androidx.core.app.NotificationCompat
-import com.naruto.lib.common.Global
-import com.naruto.lib.common.TopFunction.isDomesticRom
 import com.naruto.lib.common.utils.ServiceUtil
 
 
@@ -24,11 +23,9 @@ abstract class ForegroundService : BaseService() {
     override fun onCreate() {
         super.onCreate()
         notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        val icon = if (isDomesticRom() && Build.VERSION.SDK_INT < Build.VERSION_CODES.S) -1
-        else Global.notificationIcon
         notificationBuilder = ServiceUtil.setForegroundService(
-            this, getPendingIntent(), getNotificationId(), icon, { initNotification() }
-        )
+            this, getPendingIntent(), getNotificationId(), getNotificationIcon()
+        ) { initNotification() }
     }
 
     /**
@@ -57,6 +54,9 @@ abstract class ForegroundService : BaseService() {
     protected abstract fun getNotificationId(): Int
 
     protected abstract fun getPendingIntent(): PendingIntent?
+
+    @DrawableRes
+    protected fun getNotificationIcon(): Int = -1
 
     companion object {
         const val NOTIFICATION_ID_WIDGET = 1
