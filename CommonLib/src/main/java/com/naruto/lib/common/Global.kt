@@ -64,11 +64,10 @@ object Global {
     var isDebug: Boolean = true
 
     fun toast(msg: String, shortDuration: Boolean = true) {
-        val toast = Toast.makeText(
-            getMainModuleContext(), msg,
-            if (shortDuration) Toast.LENGTH_SHORT else Toast.LENGTH_LONG
-        )
-        runOnMainThread { toast.show() }
+        runOnMainThread {
+            val duration = if (shortDuration) Toast.LENGTH_SHORT else Toast.LENGTH_LONG
+            Toast.makeText(getMainModuleContext(), msg, duration).show()
+        }
     }
 
     /**
@@ -81,7 +80,7 @@ object Global {
     }
 
     fun runOnMainThread(block: () -> Unit) {
-        if (isMainThread()) block() else MainScope().launch { block }
+        if (isMainThread()) block() else MainScope().launch { block() }
     }
 
     /**
