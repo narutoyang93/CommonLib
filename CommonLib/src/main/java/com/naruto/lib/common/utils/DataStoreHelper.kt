@@ -19,6 +19,7 @@ const val DEF_INT = -1
 const val DEF_LONG: Long = -1
 const val DEF_FLOAT = -1.0f
 const val DEF_DOUBLE = -1.0
+const val DEF_BOOLEAN = false
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "MyData")
 
@@ -63,13 +64,20 @@ open class DataStoreHelper(private val dataStore: DataStore<Preferences>) {
         setValue(doublePreferencesKey(key), value)
     }
 
-    fun getStringValue(key: String, def: String = DEF_STRING)
-            : Flow<String> {
+    fun getStringValue(key: String, def: String = DEF_STRING): Flow<String> {
         return getValue(stringPreferencesKey(key), def)
     }
 
     suspend fun setStringValue(key: String, value: String) {
         setValue(stringPreferencesKey(key), value)
+    }
+
+    fun getBooleanValue(key: String, def: Boolean = DEF_BOOLEAN): Flow<Boolean> {
+        return getValue(booleanPreferencesKey(key), def)
+    }
+
+    suspend fun setBooleanValue(key: String, value: Boolean) {
+        setValue(booleanPreferencesKey(key), value)
     }
 
 
