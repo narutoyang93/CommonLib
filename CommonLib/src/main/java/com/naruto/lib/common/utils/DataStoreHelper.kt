@@ -5,8 +5,12 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import com.naruto.lib.common.Global
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 /**
  * @Description
@@ -78,6 +82,23 @@ open class DataStoreHelper(private val dataStore: DataStore<Preferences>) {
 
     suspend fun setBooleanValue(key: String, value: Boolean) {
         setValue(booleanPreferencesKey(key), value)
+    }
+
+    /**
+     * 获取DataStore数据并监听变化
+     * @param key String
+     * @param func Function1<String, Flow<T>> 获取DataStore数据的方法，例如{ CommonDataStore.getLongValue(it, 0) }
+     * @param callback Function1<T, Unit>
+     */
+    fun <T> listenDataStoreDataChange(
+        key: String, func: DataStoreHelper.(String) -> Flow<T>, callback: (T) -> Unit
+    ) {
+        CoroutineScope(Dispatchers.IO).launch {
+            func(key).collect {
+                callback(it)
+                LogUtils.i("--->$key has changed：$it")
+            }
+        }
     }
 
 
