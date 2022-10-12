@@ -51,11 +51,6 @@ public abstract class PermissionHelper implements ContextBridge {
      * @param callback
      */
     public void doWithPermission(RequestPermissionsCallback callback) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {//6.0以下系统无需动态申请权限
-            if (callback != null) callback.onGranted();
-            return;
-        }
-        //检查权限
         List<String> requestPermissionsList = checkPermissions(callback.getRequestPermissions());//记录需要申请的权限
         if (requestPermissionsList.isEmpty()) {//均已授权
             callback.onGranted();
@@ -103,9 +98,9 @@ public abstract class PermissionHelper implements ContextBridge {
      * @param permissions
      * @return
      */
-    @RequiresApi(api = Build.VERSION_CODES.M)
     public List<String> checkPermissions(String... permissions) {
         List<String> list = new ArrayList<>();
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return list;//6.0以下自动授权，无效检查
         for (String p : permissions) {
             if (getContext().checkSelfPermission(p) != PackageManager.PERMISSION_GRANTED) {//未授权，记录下来
                 list.add(p);

@@ -3,7 +3,6 @@ package com.naruto.lib.common.base;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -11,7 +10,6 @@ import android.view.ViewGroup;
 
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.LifecycleOwner;
@@ -116,7 +114,6 @@ public abstract class BaseActivity extends AppCompatActivity implements BaseView
      * @param permissions
      * @return
      */
-    @RequiresApi(api = Build.VERSION_CODES.M)
     protected List<String> checkPermissions(String... permissions) {
         return permissionHelper.checkPermissions(permissions);
     }
