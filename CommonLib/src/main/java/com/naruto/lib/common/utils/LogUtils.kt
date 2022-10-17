@@ -1,13 +1,11 @@
 package com.naruto.lib.common.utils
 
 import android.util.Log
-import com.naruto.lib.common.*
-import com.naruto.lib.common.TopFunction.currentDateTime
-import com.naruto.lib.common.TopFunction.todayDate
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import com.naruto.lib.common.Extension.remove
+import com.naruto.lib.common.Global
+import com.naruto.lib.common.TopFunction.currentDateTime
+import com.naruto.lib.common.TopFunction.runInCoroutine
+import com.naruto.lib.common.TopFunction.todayDate
 
 /**
  * @Description
@@ -17,7 +15,9 @@ import com.naruto.lib.common.Extension.remove
  */
 object LogUtils {
     private const val DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss:SSS"
-    private val defTag by lazy { Global.runCatching { appNameEN }.getOrDefault(Global.appName).toString() }
+    private val defTag by lazy {
+        Global.runCatching { appNameEN }.getOrDefault(Global.appName).toString()
+    }
     private val logMap by lazy { mutableMapOf<String, StringBuilder>() }
     private fun log(msg: String, block: ((String, String) -> Unit)) {
         Throwable().stackTrace[2].run {
@@ -57,7 +57,7 @@ object LogUtils {
 
     fun writeToFile() {
         if (Global.isDebug) return
-        CoroutineScope(Dispatchers.IO).launch {
+        runInCoroutine {
             for ((date, stringBuilder) in logMap) {
                 if (stringBuilder.isNotEmpty()) {
                     val backupSB = StringBuilder(stringBuilder)//备份

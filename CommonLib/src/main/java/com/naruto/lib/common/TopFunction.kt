@@ -1,6 +1,10 @@
 package com.naruto.lib.common.TopFunction
 
 import android.os.Build
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -20,4 +24,10 @@ fun isDomesticRom(): Boolean {
         "HUAWEI", "HONOR", "XIAOMI", "OPPO", "VIVO" -> true
         else -> false
     }
+}
+
+fun runInCoroutine(
+    dispatcher: CoroutineDispatcher = Dispatchers.IO, block: suspend CoroutineScope.() -> Unit
+) {
+    CoroutineScope(dispatcher).launch(block = block)
 }

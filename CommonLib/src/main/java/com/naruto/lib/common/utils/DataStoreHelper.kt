@@ -5,12 +5,10 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
 import com.naruto.lib.common.Global
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import com.naruto.lib.common.TopFunction.runInCoroutine
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 
 /**
  * @Description
@@ -93,7 +91,7 @@ open class DataStoreHelper(private val dataStore: DataStore<Preferences>) {
     fun <T> listenDataStoreDataChange(
         key: String, func: DataStoreHelper.(String) -> Flow<T>, callback: (T) -> Unit
     ) {
-        CoroutineScope(Dispatchers.IO).launch {
+        runInCoroutine{
             func(key).collect {
                 callback(it)
                 LogUtils.i("--->$key has changed：$it")
