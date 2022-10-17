@@ -94,6 +94,26 @@ class DialogFactory {
             )
         }
 
+        /**
+         * 构建弹窗
+         * @param context Context
+         * @param content TextParam
+         * @param confirmListener OnDialogButtonClickListener
+         * @param title TextParam?
+         * @param viewProcessor Function2<AlertDialog, View, Unit>?
+         * @return AlertDialog
+         */
+        @JvmOverloads
+        fun createActionDialog(
+            context: Context, content: TextParam,
+            confirmListener: OnDialogButtonClickListener,
+            title: TextParam? = null, viewProcessor: ((AlertDialog, View) -> Unit)? = null
+        ): AlertDialog {
+            val option = ActionDialogOption(
+                title = title, content = content, confirmListener = confirmListener
+            )
+            return createActionDialog(context, option, viewProcessor)
+        }
 
         /**
          * 构建弹窗
