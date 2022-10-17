@@ -1,7 +1,9 @@
 package com.naruto.lib.common.utils
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.Dialog
 import android.content.*
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -19,12 +21,13 @@ import androidx.core.content.FileProvider.getUriForFile
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.documentfile.provider.DocumentFile
 import com.naruto.lib.common.Global
+import com.naruto.lib.common.NormalText
+import com.naruto.lib.common.TopFunction.runInCoroutine
 import com.naruto.lib.common.helper.PermissionHelper
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.runBlocking
 import java.io.*
 import java.util.*
@@ -38,6 +41,9 @@ import java.util.*
  */
 object FileUtil {
     private val APP_FOLDER = Global.appNameEN + "/"
+    val SELECTION_SPECIFY_FILE = MediaStore.MediaColumns.DISPLAY_NAME + "=? and " +
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) MediaStore.MediaColumns.RELATIVE_PATH + "=?"
+            else MediaStore.Images.Media.DATA + " like ?"
 
     /**
      * @param relativePath    相对根目录（/storage/emulated/0/）的路径，不以“/”开头，但以“/”结尾
@@ -157,7 +163,7 @@ object FileUtil {
         if (uri == null) {//找不到目标文件则创建新文件（有几种情况：1.系统不存在目标文件。2.系统已存在同名文件A且本app无法访问，此时会创建“A(1)”。3.“A(1)”也无法访问了，此时有可能连之前的同名文件A都没有了，可以尝试创建“A”）
             createFileInExternalPublicSpace(mediaType, relativePath, fileName) { uri0 ->
                 uri0?.let {
-                    CoroutineScope(Dispatchers.IO).launch {//判断新文件名是否与目标文件名是否一致，如果不一致，说明目标文件已无法访问，需记录原文件名与新文件名的映射
+                    runInCoroutine {//判断新文件名是否与目标文件名是否一致，如果不一致，说明目标文件已无法访问，需记录原文件名与新文件名的映射
                         getContentResolver().query(
                             it, arrayOf(MediaStore.MediaColumns.DISPLAY_NAME), null, null
                         ).use { cursor ->
@@ -223,38 +229,44 @@ object FileUtil {
      * @param mediaType
      * @return
      */
-    private fun getMediaStoreData(mediaType: MediaType): MediaData {
+    fun getMediaStoreData(mediaType: MediaType): MediaData {
         var directory: String? = null
         var contentUri: Uri? = null
         when (mediaType) {
             MediaType.AUDIO -> {
                 directory = Environment.DIRECTORY_MUSIC
-                contentUri =
+                contentUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
                     MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+                else MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
             }
             MediaType.IMAGE -> {
                 directory = Environment.DIRECTORY_PICTURES
-                contentUri =
+                contentUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
                     MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+                else MediaStore.Images.Media.EXTERNAL_CONTENT_URI
             }
             MediaType.VIDEO -> {
                 directory = Environment.DIRECTORY_MOVIES
-                contentUri =
+                contentUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
                     MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+                else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
             }
             MediaType.FILE -> {
+                val volume = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                    MediaStore.VOLUME_EXTERNAL_PRIMARY else "external_primary"
                 directory = Environment.DIRECTORY_DOCUMENTS
-                contentUri = MediaStore.Files.getContentUri("external")
+                contentUri = MediaStore.Files.getContentUri(volume)
             }
             MediaType.DOWNLOAD -> {
                 directory = Environment.DIRECTORY_DOWNLOADS
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    contentUri = MediaStore.Downloads.EXTERNAL_CONTENT_URI
-                }
+                contentUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                    MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+                else MediaStore.Files.getContentUri("external_primary")
             }
         }
         return MediaData(directory = directory, contentUri = contentUri)
     }
+
 
     /**
      * 根据文件获取Uri
@@ -262,9 +274,30 @@ object FileUtil {
      * @param file
      * @return
      */
-    fun getUriForFile(file: File): Uri {
+    fun getUriForFile(file: File): Uri? {
+        if (!file.exists()) return null
         val context: Context = getContext()
         return getUriForFile(context, context.packageName + ".app.fileProvider", file)
+    }
+
+    /**
+     * 根据Uri获取File
+     *
+     * @param uri
+     * @return
+     */
+    private fun getFileByUri(uri: Uri): File {
+        return File(uri.path!!)
+    }
+
+    /**
+     * 判断字符串是否是Uri
+     */
+    fun isUri(str: String): Boolean {
+        return if (TextUtils.isEmpty(str)) false
+        else str.startsWith(ContentResolver.SCHEME_CONTENT + "://")
+                || str.startsWith(ContentResolver.SCHEME_ANDROID_RESOURCE + "://")
+                || str.startsWith(ContentResolver.SCHEME_FILE + "://")
     }
 
     /**
@@ -278,13 +311,13 @@ object FileUtil {
     @RequiresApi(api = Build.VERSION_CODES.Q)
     private fun createFile(contentUri: Uri, relativePath: String, fileName: String): Uri? {
         val contentValues = ContentValues()
-        contentValues.put(MediaStore.Downloads.DISPLAY_NAME, fileName)
+        contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
         contentValues.put(
-            MediaStore.Downloads.MIME_TYPE,
+            MediaStore.MediaColumns.MIME_TYPE,
             getMimeTypeFromExtension(fileName.substringAfterLast("."))
         )
-        contentValues.put(MediaStore.Downloads.DATE_TAKEN, System.currentTimeMillis())
-        contentValues.put(MediaStore.Downloads.RELATIVE_PATH, relativePath)
+        contentValues.put(MediaStore.MediaColumns.DATE_TAKEN, System.currentTimeMillis())
+        contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
         return getContentResolver().insert(contentUri, contentValues)
     }
 
@@ -356,9 +389,20 @@ object FileUtil {
      * @param relativePath
      * @return
      */
-    private fun getRelativePathInRoot(systemDirectory: String, relativePath: String): String {
-        return "$systemDirectory/$APP_FOLDER$relativePath"
-    }
+    private fun getRelativePathInRoot(systemDirectory: String, relativePath: String): String =
+        "$systemDirectory/$APP_FOLDER$relativePath"
+
+
+    /**
+     * 获取sd根目录下的相对路径
+     *
+     * @param mediaType
+     * @param relativePath
+     * @return
+     */
+    fun getRelativePathInRoot(mediaType: MediaType, relativePath: String): String =
+        getRelativePathInRoot(getMediaStoreData(mediaType).directory!!, relativePath)
+
 
     /**
      * 在外部私有空间创建文件
@@ -397,13 +441,10 @@ object FileUtil {
                 callback(createFile(folderPath, fileName))
             }
         } else {
-            try {
+            kotlin.runCatching {
                 val path = getRelativePathInRoot(mediaData.directory!!, relativePath)
-                val uri: Uri? = createFile(mediaData.contentUri!!, path, fileName)
-                callback(uri)
-            } catch (e: java.lang.Exception) {
-                e.printStackTrace()
-            }
+                callback(createFile(mediaData.contentUri!!, path, fileName))
+            }.onFailure { it.printStackTrace() }
         }
     }
 
@@ -500,21 +541,20 @@ object FileUtil {
             mediaData.contentUri!!, projection, selection, selectionArgs, sortOrder
         ).use { cursor ->
             if (cursor == null) return list
-            val idColumn: Int = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID)
-            val nameColumn: Int = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
-            val relativePathColumn: Int =
+            val idColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns._ID)
+            val nameColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME)
+            val relativePathColumn =
                 cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.RELATIVE_PATH)
-            val durationColumn: Int = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DURATION)
-            val createTimeColumn: Int =
-                cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATE_ADDED)
-            val sizeColumn: Int = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE)
+            val durationColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DURATION)
+            val createTimeColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATE_ADDED)
+            val sizeColumn = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE)
             while (cursor.moveToNext()) {
-                val id: Long = cursor.getLong(idColumn)
-                val name: String = cursor.getString(nameColumn)
-                val relativePath: String = cursor.getString(relativePathColumn)
-                val duration: Int = cursor.getInt(durationColumn)
-                val size: Long = cursor.getInt(sizeColumn).toLong()
-                val createTime: Long = cursor.getLong(createTimeColumn)
+                val id = cursor.getLong(idColumn)
+                val name = cursor.getString(nameColumn)
+                val relativePath = cursor.getString(relativePathColumn)
+                val duration = cursor.getInt(durationColumn)
+                val size = cursor.getInt(sizeColumn).toLong()
+                val createTime = cursor.getLong(createTimeColumn)
                 val fileUri = ContentUris.withAppendedId(mediaData.contentUri, id)
                 val data = MediaData(
                     id, fileUri, name, null, relativePath, duration, size, createTime
@@ -541,14 +581,351 @@ object FileUtil {
             getUriForFile(File(folderPath + fileName))
         } else {
             val mediaData: MediaData = getMediaStoreData(mediaType)
-            val selection =
-                MediaStore.MediaColumns.DISPLAY_NAME + "=? and " + MediaStore.MediaColumns.RELATIVE_PATH + "=?"
+            val selection = SELECTION_SPECIFY_FILE
             val args = arrayOf(fileName, getRelativePathInRoot(mediaData.directory!!, relativePath))
             val list: List<Uri> =
                 getFileInExternalPublicSpace(mediaData, selection, args, null) { it.fileUri!! }
             if (list.isEmpty()) null else list[0]
         }
     }
+
+
+    /**
+     * 获取外部公共空间的文件
+     *
+     * @param mediaType
+     * @param relativePath
+     * @param myFileFilter
+     * @param fileInfoCreator
+     * @param callback
+     * @param <T>
+    </T> */
+    fun <T> getFileInExternalPublicSpace(
+        mediaType: MediaType, relativePath: String, myFileFilter: MyFileFilter?,
+        fileInfoCreator: (MediaData) -> T, callback: (List<T>) -> Unit
+    ) {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            val folderPath: String = getPathFromExternalPublicSpace(mediaType, relativePath)
+            getFileInExternalSpace(folderPath, myFileFilter, fileInfoCreator, callback)
+        } else {
+            val data = getMediaStoreData(mediaType)
+            val selection = MediaStore.MediaColumns.RELATIVE_PATH + "=?"
+            val args = arrayOf(getRelativePathInRoot(data.directory!!, relativePath))
+
+            myFileFilter?.doForMediaStore(selection, args) { f_slc, f_args ->
+                callback(getFileInExternalPublicSpace(data, f_slc, f_args, null, fileInfoCreator))
+            }
+        }
+    }
+
+
+    /**
+     * 获取外部非公共空间的文件
+     *
+     * @param relativePath    相对根目录（/storage/emulated/0/）的路径，不以“/”开头，但以“/”结尾
+     * @param fileInfoCreator
+     * @param callback
+     * @param <T>
+    </T> */
+    @SuppressLint("CheckResult")
+    fun <T> getFileInExternalNonPublicSpace(
+        relativePath: String, fileInfoCreator: (MediaData) -> T, callback: (List<T>) -> Unit
+    ) {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            val folderPath = Environment.getExternalStorageDirectory().toString() + "/$relativePath"
+            getFileInExternalSpace(folderPath, null, fileInfoCreator, callback)
+            return
+        }
+        val spKey = "treeUri_$relativePath"
+        val operation: (DocumentFile) -> Unit = { df ->
+            val list: MutableList<T> = ArrayList()
+            var mediaData: MediaData
+            df.listFiles().forEach { f ->
+                mediaData = MediaData(
+                    fileUri = f.uri, fileName = f.name, size = f.length(),
+                    createTime = f.lastModified()
+                )
+                list.add(fileInfoCreator(mediaData))
+            }
+            callback(list)
+        }
+
+        runInCoroutine {
+            val treeUriString = FileDataStore.getStringValue(spKey).single()
+            if (!TextUtils.isEmpty(treeUriString)) {
+                kotlin.runCatching {
+                    val treeUri = Uri.parse(treeUriString)
+                    //检查权限
+                    getContentResolver().takePersistableUriPermission(
+                        treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                    DocumentFile.fromTreeUri(getContext(), treeUri)
+                }.onFailure { it.printStackTrace() }.getOrNull()?.let { df ->
+                    operation(df);return@runInCoroutine
+                }
+            }
+
+            //前往授权
+            val message = "由于当前系统限制，访问外部非共享文件需获取局部访问权限，即将打开设置页面，请在打开的页面点击底部按钮"
+            val confirmListener = object : DialogFactory.OnDialogButtonClickListener {
+                override fun onClick(view: View, dialog: Dialog) {
+                    var rp = relativePath
+                    while (rp.endsWith("/")) {
+                        rp = rp.substring(0, rp.length - 1)
+                    }
+                    val relativePath0 = rp.replace("/", "%2F")
+                    val uri =
+                        Uri.parse("content://com.android.externalstorage.documents/document/primary:$relativePath0")
+                    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+                    intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, uri)
+                    Global.doByActivity { activity ->
+                        activity.startActivityForResult(intent) { result ->
+                            if (result.resultCode != Activity.RESULT_OK) return@startActivityForResult
+                            val treeUri = result.data?.data ?: return@startActivityForResult
+                            val df = DocumentFile.fromTreeUri(getContext(), treeUri)
+                                ?: return@startActivityForResult
+                            val uriStr = treeUri.toString()
+                            if (uriStr.endsWith(relativePath0)) {
+                                runInCoroutine { FileDataStore.setStringValue(spKey, uriStr) }
+                                //永久保存获取的目录权限
+                                getContentResolver().takePersistableUriPermission(
+                                    treeUri, Intent.FLAG_GRANT_READ_URI_PERMISSION
+                                )
+                                operation(df)
+                            } else activity.runOnUiThread {
+                                val msg = "授权文件夹与目标文件夹不一致，请重新设置（设置局部权限时请勿选择其他文件夹）"
+                                DialogFactory.createActionDialog(
+                                    activity, NormalText(msg), this, NormalText("操作失败")
+                                ).show()
+                            }
+                        }
+                    }
+                }
+            }
+            //弹窗
+            Global.doByActivity { activity ->
+                activity.runOnUiThread {
+                    DialogFactory.createActionDialog(
+                        activity, NormalText(message), confirmListener, NormalText("提示")
+                    ).show()
+                }
+            }
+        }
+    }
+
+
+    /**
+     * 获取外部空间的文件
+     *
+     * @param folderPath
+     * @param myFileFilter
+     * @param fileInfoCreator
+     * @param callback
+     * @param <T>
+    </T> */
+    private fun <T> getFileInExternalSpace(
+        folderPath: String, myFileFilter: MyFileFilter?, fileInfoCreator: (MediaData) -> T,
+        callback: (List<T>) -> Unit
+    ) {
+        assert(Build.VERSION.SDK_INT != Build.VERSION_CODES.Q) { "Android 10 不支持" }
+        Global.doWithPermission(object : PermissionHelper.RequestPermissionsCallback(
+            Pair(null, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE))
+        ) {
+            override fun onGranted() {
+                val list: MutableList<T> = ArrayList()
+                val folder = File(folderPath)
+                val files: Array<File>? = if (myFileFilter == null) folder.listFiles()
+                else { //有过滤条件
+                    if (myFileFilter.filenameFilter != null)
+                        folder.listFiles(myFileFilter.filenameFilter)
+                    else folder.listFiles(myFileFilter.fileFilter)
+                }
+                var mediaData: MediaData
+                files?.takeIf { files.isNotEmpty() }?.forEach { f ->
+                    mediaData = MediaData(
+                        0, getUriForFile(f), f.name, f.absolutePath, null, 0, f.length(),
+                        f.lastModified()
+                    )
+                    list.add(fileInfoCreator(mediaData))
+                }
+                callback(list)
+            }
+        })
+    }
+
+
+    /**
+     * 删除外部公共空间的文件
+     *
+     * @param mediaType
+     * @param selection
+     * @param selectionArgs
+     * @return
+     */
+    fun deleteFileInExternalPublicSpace(
+        mediaType: MediaType, selection: String, selectionArgs: Array<String>?
+    ): Int {
+        return getContentResolver()
+            .delete(getMediaStoreData(mediaType).contentUri!!, selection, selectionArgs)
+    }
+
+    /**
+     * 删除外部公共空间的文件
+     *
+     * @param mediaType
+     * @param relativePath
+     * @param fileName
+     * @return
+     */
+    fun deleteFileInExternalPublicSpace(
+        mediaType: MediaType, relativePath: String, filter: MyFileFilter
+    ): Boolean {
+        return if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            File(getPathFromExternalPublicSpace(mediaType, relativePath)).takeIf { it.exists() }
+                ?.run {
+                    filter.fileFilter?.let { listFiles(it) } ?: listFiles(filter.filenameFilter!!)
+                        ?.let { files ->
+                            doWithStoragePermission { files.forEach { it.delete() } }
+                        }
+                }
+            true
+        } else {
+            val selection = MediaStore.MediaColumns.RELATIVE_PATH + "=?"
+            val args = arrayOf(getRelativePathInRoot(mediaType, relativePath))
+
+            filter.doForMediaStore(selection, args) { full_selection, full_args ->
+                deleteFileInExternalPublicSpace(mediaType, full_selection, full_args) > 0
+            }
+        }
+    }
+
+    /**
+     * 删除外部公共空间的文件
+     *
+     * @param mediaType
+     * @param relativePath
+     * @param fileName
+     * @return
+     */
+    fun deleteFileInExternalPublicSpace(
+        mediaType: MediaType, relativePath: String, fileName: String
+    ): Boolean {
+        return if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            val filePath: String =
+                getPathFromExternalPublicSpace(mediaType, relativePath) + fileName
+            delete(filePath)
+        } else {
+            val args = arrayOf(fileName, getRelativePathInRoot(mediaType, relativePath))
+            deleteFileInExternalPublicSpace(mediaType, SELECTION_SPECIFY_FILE, args) > 0
+        }
+    }
+
+    /**
+     * 删除外部公共空间的文件夹
+     *
+     * @param mediaType
+     * @param relativePath
+     * @return
+     */
+    fun deleteFolderInExternalPublicSpace(mediaType: MediaType, relativePath: String): Boolean {
+        return if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            val folderPath: String = getPathFromExternalPublicSpace(mediaType, relativePath)
+            delete(folderPath)
+        } else {
+            val selection = MediaStore.MediaColumns.RELATIVE_PATH + "=?"
+            val args = arrayOf(getRelativePathInRoot(mediaType, relativePath))
+            deleteFileInExternalPublicSpace(mediaType, selection, args) > 0
+        }
+    }
+
+
+    /**
+     * 更新外部存储空间的文件
+     *
+     * @param mediaType
+     * @param selection
+     * @param selectionArgs
+     * @param updateValues
+     * @return
+     */
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    fun updateFileInExternalPublicSpace(
+        mediaType: MediaType, selection: String?, selectionArgs: Array<String>?,
+        updateValues: ContentValues?
+    ): Boolean {
+        val mediaData = getMediaStoreData(mediaType)
+        val uriList: List<Uri> =
+            getFileInExternalPublicSpace(mediaData, selection, selectionArgs, null) { it.fileUri!! }
+        return kotlin.runCatching {
+            uriList.forEach { updateFileInExternalPublicSpace(it, updateValues) };true
+        }.onFailure { it.printStackTrace() }.getOrDefault(false)
+    }
+
+    fun updateFileInExternalPublicSpace(fileUri: Uri?, updateValues: ContentValues?): Boolean =
+        getContentResolver().update(fileUri!!, updateValues, null, null) > 0
+
+    /**
+     * 重命名
+     *
+     * @param mediaType
+     * @param relativePath
+     * @param oldFileName
+     * @param newFileName
+     * @return
+     */
+    fun renameFileInExternalPublicSpace(
+        mediaType: MediaType, relativePath: String, oldFileName: String, newFileName: String
+    ): Boolean {
+        return if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            val folderPath: String = getPathFromExternalPublicSpace(mediaType, relativePath)
+            val old = File(folderPath + oldFileName)
+            old.renameTo(File(folderPath + newFileName))
+        } else {
+            val args = arrayOf(oldFileName, getRelativePathInRoot(mediaType, relativePath))
+            val updateValues = ContentValues()
+            updateValues.put(MediaStore.MediaColumns.DISPLAY_NAME, newFileName)
+            updateFileInExternalPublicSpace(mediaType, SELECTION_SPECIFY_FILE, args, updateValues)
+        }
+    }
+
+
+    /**
+     * 删除文件 path或Uri
+     */
+    fun delete(filePath: String): Boolean {
+        if (filePath.isEmpty()) return true
+        return if (isUri(filePath)) delete(Uri.parse(filePath)) else delete(File(filePath))
+    }
+
+    /**
+     *
+     * @param file File
+     * @return Boolean
+     */
+    fun delete(file: File): Boolean {
+        if (!file.exists()) return true
+        if (file.isDirectory) { //目录
+            //先把目录下的文件都删除了，再删除目录
+            file.list()?.let { children ->
+                val size = children.size
+                for (i in 0 until size) {
+                    if (!delete(File(file, children[i]))) return false
+                }
+            }
+        }
+        return file.delete()
+    }
+
+    /**
+     * 删除Uri对应的资源
+     */
+    fun delete(uri: Uri): Boolean {
+        return if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            val file: File = getFileByUri(uri)
+            if (file.exists()) file.delete() else true
+        } else getContentResolver().delete(uri, null, null) > 0
+    }
+
 
     /**
      * 执行需要存储权限的操作
@@ -558,10 +935,58 @@ object FileUtil {
      */
     fun doWithStoragePermission(autoRequest: Boolean = true, operation: () -> Unit) {
         Global.doWithPermission(object : PermissionHelper.RequestPermissionsCallback(
-            Pair(null, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE))
+            Pair(
+                null,
+                arrayOf(
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.READ_EXTERNAL_STORAGE
+                )
+            )
         ) {
             override fun onGranted() = operation()
         }.apply { setAutoRequest(autoRequest) })
+    }
+
+
+    /**
+     * @Description 文件过滤
+     * @Author Naruto Yang
+     * @CreateDate 2021/7/18 0018
+     * @Note
+     */
+    class MyFileFilter {
+        var fileFilter: FileFilter? = null
+        var filenameFilter: FilenameFilter? = null
+        var selection: String
+        var selectionArgs: Array<String>?
+
+        constructor(fileFilter: FileFilter, selection: String, selectionArgs: Array<String>?) {
+            this.fileFilter = fileFilter
+            this.selection = selection
+            this.selectionArgs = selectionArgs
+        }
+
+        constructor(
+            filenameFilter: FilenameFilter, selection: String, selectionArgs: Array<String>?
+        ) {
+            this.filenameFilter = filenameFilter
+            this.selection = selection
+            this.selectionArgs = selectionArgs
+        }
+
+        inline fun <T> doForMediaStore(
+            def_selection: String, def_args: Array<String>,
+            block: (full_selection: String, full_args: Array<String>) -> T
+        ): T {
+            var full_selection = def_selection
+            var full_args = def_args.clone()
+            if (selection.isNotEmpty()) { //有过滤条件
+                if (!selection.trim().lowercase().startsWith("and")) full_selection += " and "
+                full_selection += selection
+                selectionArgs?.takeIf { it.isNotEmpty() }?.let { full_args += it }//合并参数
+            }
+            return block(full_selection, full_args)
+        }
     }
 
     /**

@@ -6,5 +6,15 @@
             android:exported="false"
             android:launchMode="singleInstance"
             android:theme="@style/TranslucentActivity" />
+
+        <provider
+            android:name=".MyFileProvider"
+            android:authorities="${applicationId}.app.fileProvider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 </manifest>
