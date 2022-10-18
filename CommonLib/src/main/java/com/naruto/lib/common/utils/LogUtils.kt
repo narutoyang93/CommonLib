@@ -25,13 +25,15 @@ object LogUtils {
         Throwable().stackTrace[2].run {
             //block(className, "$msg[$className.$methodName($fileName:$lineNumber)]")
             val content = "[${toString()}]$msg"
-            if (Global.isDebug) block(defTag, content)
+            if (Global.isDebug || !documentable) block(defTag, content)
             else {
                 val stringBuilder = logMap.getOrPut(getTodayDate()) { StringBuilder() }
                 stringBuilder.append("${currentDateTime(DATETIME_FORMAT)} $content\n")
             }
         }
     }
+
+    var documentable: Boolean = false//是否写入文件
 
     fun v(msg: String) {
         log(msg) { tag, m -> Log.v(tag, m) }
@@ -58,7 +60,7 @@ object LogUtils {
     }
 
     fun writeToFile() {
-        if (Global.isDebug) return
+        if (Global.isDebug || !documentable) return
         runInCoroutine {
             for ((date, stringBuilder) in logMap) {
                 if (stringBuilder.isNotEmpty()) {
@@ -86,7 +88,9 @@ object LogUtils {
             { file -> file?.let { it.lastModified() < earliestExpiryDay } ?: false },
             selection, arrayOf("${earliestExpiryDay / 1000}")
         )
-        FileUtil.deleteFileInExternalPublicSpace(FileUtil.MediaType.FILE, "log/", filter)
+        runInCoroutine {
+            FileUtil.deleteFileInExternalPublicSpace(FileUtil.MediaType.FILE, "log/", filter)
+        }
     }
 
     private fun getTodayDate() = todayDate("yyyy-MM-dd")
