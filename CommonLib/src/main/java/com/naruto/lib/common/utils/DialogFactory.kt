@@ -43,13 +43,14 @@ class DialogFactory {
          */
         @JvmOverloads
         fun showHintDialog(
-            context: Context, message: TextParam, contentGravityCenter: Boolean = true,
+            context: Context, message: TextParam, title: TextParam? = null,
+            contentGravityCenter: Boolean = true,
             confirmText: TextParam = ResText(R.string.text_confirm),
             onConfirmListener: (() -> Unit)? = null,
             viewProcessor: ((AlertDialog, View) -> Unit)? = null
         ): AlertDialog {
             val option = ActionDialogOption(
-                content = message, confirmText = confirmText,
+                content = message, confirmText = confirmText, title = title,
                 confirmListener = if (onConfirmListener == null) null
                 else OnDialogButtonClickListener { view, dialog -> onConfirmListener() },
                 cancelText = null, contentGravityCenter = contentGravityCenter

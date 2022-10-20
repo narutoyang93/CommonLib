@@ -1,84 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:cardBackgroundColor="@color/white"
-    app:cardCornerRadius="@dimen/dialog_corner_radius">
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/tv_title"
+        style="@style/DialogTitleTextStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:gravity="center_horizontal"
+        android:visibility="gone"
+        tools:text="提示"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/tv_content"
+        style="@style/DialogContentTextStyle"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:minHeight="@dimen/dialog_min_height"
+        android:padding="@dimen/paddingHorizontal"
+        tools:text="内容" />
 
     <LinearLayout
-        android:layout_width="@dimen/dialog_width"
-        android:layout_height="wrap_content"
-        android:backgroundTint="@color/white"
-        android:orientation="vertical">
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@drawable/bg_top_line"
+        android:divider="@drawable/line_vertical"
+        android:dividerPadding="8dp"
+        android:showDividers="middle">
 
         <TextView
-            android:id="@+id/tv_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:gravity="center_horizontal"
-            android:textColor="#ff1e1e1e"
-            android:textSize="16sp"
+            android:id="@+id/btn_cancel"
+            style="@style/DialogButtonStyle"
+            tools:text="取消" />
+
+        <TextView
+            android:id="@+id/btn_neutral"
+            style="@style/DialogButtonStyle"
             android:visibility="gone"
-            tools:text="提示"
+            tools:text="其他"
             tools:visibility="visible" />
 
         <TextView
-            android:id="@+id/tv_content"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:lineSpacingExtra="5dp"
-            android:minHeight="@dimen/dialog_min_height"
-            android:padding="@dimen/paddingHorizontal"
-            android:textColor="#FF353535"
-            android:textSize="14sp"
-            tools:text="内容" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="48dp"
-            android:background="@drawable/bg_top_line"
-            android:divider="@drawable/line_vertical"
-            android:dividerPadding="8dp"
-            android:showDividers="middle">
-
-            <TextView
-                android:id="@+id/btn_cancel"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:textColor="#FF000000"
-                android:textSize="17sp"
-                tools:text="取消" />
-
-            <TextView
-                android:id="@+id/btn_neutral"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:textColor="#FF000000"
-                android:textSize="15sp"
-                android:visibility="gone"
-                tools:text="其他"
-                tools:visibility="visible" />
-
-            <TextView
-                android:id="@+id/btn_confirm"
-                android:layout_width="0dp"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:gravity="center"
-                android:textColor="?android:colorPrimary"
-                android:textSize="17sp"
-                tools:text="确定" />
-        </LinearLayout>
-
+            android:id="@+id/btn_confirm"
+            style="@style/DialogButtonStyle"
+            android:textColor="?android:colorPrimary"
+            tools:text="确定" />
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+
+</LinearLayout>
 

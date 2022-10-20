@@ -5,13 +5,31 @@
 
     <!-- 默认弹窗样式-->
     <style name="DefaultDialogStyle" parent="Theme.MaterialComponents.DayNight.Dialog">
-        <!-- 窗口背景色（透明）-->
-        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="dialogCornerRadius">@dimen/dialog_corner_radius</item>
+        <item name="android:windowMinWidthMajor">60%</item>
+        <item name="android:windowMinWidthMinor">90%</item>
     </style>
 
     <!--加载弹窗样式-->
     <style name="LoadingDialogStyle" parent="Theme.MaterialComponents.DayNight.Dialog">
         <item name="dialogCornerRadius">@dimen/dialog_corner_radius</item>
+    </style>
+
+    <style name="DialogTitleTextStyle">
+        <item name="android:textAppearance">
+            @android:style/TextAppearance.Material.DialogWindowTitle
+        </item>
+    </style>
+
+    <style name="DialogContentTextStyle" parent="TextAppearance.AppCompat.Subhead" />
+
+    <style name="DialogButtonStyle">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:textSize">@dimen/dialog_button_text_size</item>
     </style>
 
     <!-- 透明Activity -->

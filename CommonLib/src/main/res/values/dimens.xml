@@ -2,7 +2,7 @@
 <resources>
     <dimen name="dp_10">10dp</dimen>
     <dimen name="dp_20">20dp</dimen>
-    <dimen name="dp_270">270dp</dimen>
     <dimen name="dp_0_5">0.5dp</dimen>
     <dimen name="dp_80">80dp</dimen>
+    <dimen name="dp_17">17dp</dimen>
 </resources>
