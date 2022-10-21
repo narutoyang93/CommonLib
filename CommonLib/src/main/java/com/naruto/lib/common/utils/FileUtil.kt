@@ -40,6 +40,9 @@ import java.util.*
  * @Note
  */
 object FileUtil {
+    val permissions = arrayOf(
+        Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE
+    )
     private val APP_FOLDER = Global.appNameEN + "/"
     val SELECTION_SPECIFY_FILE = MediaStore.MediaColumns.DISPLAY_NAME + "=? and " +
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) MediaStore.MediaColumns.RELATIVE_PATH + "=?"
@@ -934,17 +937,10 @@ object FileUtil {
      * @param operation
      */
     fun doWithStoragePermission(autoRequest: Boolean = true, operation: () -> Unit) {
-        Global.doWithPermission(object : PermissionHelper.RequestPermissionsCallback(
-            Pair(
-                null,
-                arrayOf(
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    Manifest.permission.READ_EXTERNAL_STORAGE
-                )
-            )
-        ) {
-            override fun onGranted() = operation()
-        }.apply { setAutoRequest(autoRequest) })
+        Global.doWithPermission(
+            object : PermissionHelper.RequestPermissionsCallback(Pair(null, permissions)) {
+                override fun onGranted() = operation()
+            }.apply { setAutoRequest(autoRequest) })
     }
 
 

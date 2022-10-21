@@ -7,6 +7,7 @@ import com.naruto.lib.common.Global
 import com.naruto.lib.common.TopFunction.currentDateTime
 import com.naruto.lib.common.TopFunction.runInCoroutine
 import com.naruto.lib.common.TopFunction.todayDate
+import kotlinx.coroutines.flow.collect
 import java.util.*
 
 /**
@@ -15,7 +16,16 @@ import java.util.*
  * @CreateDate 2021/12/15 0015
  * @Note
  */
+private const val DATASTORE_KEY_DOCUMENTABLE = "documentable"
+
 object LogUtils {
+    init {
+        runInCoroutine {
+            CommonDataStore.getBooleanValue(DATASTORE_KEY_DOCUMENTABLE, false)
+                .collect { documentable = it }
+        }
+    }
+
     private const val DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss:SSS"
     private val defTag by lazy {
         Global.runCatching { appNameEN }.getOrDefault(Global.appName).toString()
@@ -33,7 +43,11 @@ object LogUtils {
         }
     }
 
-    var documentable: Boolean = false//是否写入文件
+    //是否写入文件
+    var documentable: Boolean = false
+        set(value) {
+            runInCoroutine { CommonDataStore.setBooleanValue(DATASTORE_KEY_DOCUMENTABLE, value) }
+        }
 
     fun v(msg: String) {
         log(msg) { tag, m -> Log.v(tag, m) }
