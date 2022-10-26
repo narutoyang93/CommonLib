@@ -24,7 +24,7 @@ import java.lang.ref.WeakReference
  * @Note
  */
 object Global {
-    private var currentActivity: WeakReference<Activity>? = null
+    private var currentActivityWF: WeakReference<Activity>? = null
     private val activityMap by lazy { SparseArray<Activity>() }
     private var mActivityStartCount = 0 //Activity 启动数量
     private val operationQueue by lazy { mutableListOf<(BaseActivity) -> Unit>() }
@@ -90,11 +90,21 @@ object Global {
      * @return Activity的hashCode
      */
     fun doByActivity(operation: (BaseActivity) -> Unit) {
-        val activity = currentActivity?.get()
+        val activity = currentActivityWF?.get()
         if (activity == null) {
             operationQueue.add(operation)
             TaskActivity.launch(getMainModuleContext())
         } else runOnMainThread { operation(activity as BaseActivity) }
+    }
+
+    /**
+     * 通过当前Activity获取数据
+     * @param operation Function1<Activity, T>
+     * @param def Function0<T> 如果当前没有正在运行的activity，则以此提供默认值
+     * @return T
+     */
+    fun <T> getDataByActivity(operation: (Activity) -> T, def: () -> T): T {
+        return currentActivityWF?.get()?.let { operation(it) } ?: def()
     }
 
     /**
@@ -151,7 +161,7 @@ object Global {
 
         override fun onActivityResumed(activity: Activity) {
             LogUtils.i("--->activity=$activity")
-            currentActivity = WeakReference(activity) //记录当前正在活动的activity
+            currentActivityWF = WeakReference(activity) //记录当前正在活动的activity
             while (operationQueue.isNotEmpty()) {
                 operationQueue.removeAt(0).invoke(activity as BaseActivity)
             }
@@ -167,7 +177,7 @@ object Global {
 
         override fun onActivityDestroyed(activity: Activity) {
             activityMap.remove(activity.hashCode())
-            currentActivity = null
+            currentActivityWF = null
         }
     }
 }
