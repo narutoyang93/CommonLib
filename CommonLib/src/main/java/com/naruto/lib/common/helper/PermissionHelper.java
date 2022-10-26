@@ -22,6 +22,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 
+import com.naruto.lib.common.Global;
 import com.naruto.lib.common.NormalText;
 import com.naruto.lib.common.R;
 import com.naruto.lib.common.ResText;
@@ -120,20 +121,22 @@ public abstract class PermissionHelper implements ContextBridge {
         Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
         Uri uri = Uri.fromParts("package", getContext().getPackageName(), null);
         intent.setData(uri);
-
-        DialogFactory.Companion.createGoSettingDialog(this, new ResText(R.string.dialog_title_def),
-                new NormalText(requestPermissionReason + "，是否前往设置？"), intent
-                , () -> {
-                    callback.onDenied(getContext(), deniedPermissions);
-                    return Unit.INSTANCE;
-                }
-                , result -> {
-                    if (checkPermissions(callback.getRequestPermissions()).isEmpty()) {//已获取权限
-                        callback.onGranted();
-                    } else {//被拒绝
+        Global.INSTANCE.runOnMainThread(() -> {
+            DialogFactory.Companion.createGoSettingDialog(this, new ResText(R.string.dialog_title_def),
+                    new NormalText(requestPermissionReason + "，是否前往设置？"), intent
+                    , () -> {
                         callback.onDenied(getContext(), deniedPermissions);
+                        return Unit.INSTANCE;
                     }
-                }).show();
+                    , result -> {
+                        if (checkPermissions(callback.getRequestPermissions()).isEmpty()) {//已获取权限
+                            callback.onGranted();
+                        } else {//被拒绝
+                            callback.onDenied(getContext(), deniedPermissions);
+                        }
+                    }).show();
+            return null;
+        });
     }
 
     /**
@@ -147,8 +150,11 @@ public abstract class PermissionHelper implements ContextBridge {
         dialogData.setTitle(new ResText(R.string.dialog_title_def));
         dialogData.setCancelListener((view, dialog) -> callback.onDenied(getContext(), deniedPermissions));
         dialogData.setConfirmListener((view, dialog) -> doWithPermission(callback));
-        AlertDialog dialog = DialogFactory.Companion.createActionDialog(getContext(), dialogData);
-        dialog.show();
+        Global.INSTANCE.runOnMainThread(() -> {
+            AlertDialog dialog = DialogFactory.Companion.createActionDialog(getContext(), dialogData);
+            dialog.show();
+            return null;
+        });
     }
 
 
