@@ -136,15 +136,13 @@ class DialogFactory {
                 setText(view, option.contentViewId, option.content)
                 if (!option.contentGravityCenter)
                     doWithTextView(view, option.contentViewId) { it.gravity = Gravity.LEFT }
-                //取消按钮
-                with(option)
-                { setActionButton(dialog, view, cancelViewId, cancelText, cancelListener) }
-                //确定按钮
-                with(option)
-                { setActionButton(dialog, view, confirmViewId, confirmText, confirmListener) }
-                //中立（第三个）按钮
-                with(option)
-                { setActionButton(dialog, view, neutralViewId, neutralText, neutralListener) }
+
+                with(option) {
+                    setActionButton(dialog, view, cancelViewId, cancelText, cancelListener)//取消按钮
+                    setActionButton(dialog, view, confirmViewId, confirmText, confirmListener)//确定按钮
+                    //中立（第三个）按钮
+                    setActionButton(dialog, view, neutralViewId, neutralText, neutralListener)
+                }
 
                 viewProcessor?.invoke(dialog, view)
             }, option.themeResId)
@@ -189,7 +187,7 @@ class DialogFactory {
             context: Context, title: String, content: String, cancelText: String = "取消",
             confirmText: String = "确定", onCancel: Runnable? = null, onConfirm: Runnable
         ) {
-            AlertDialog.Builder(context, R.style.NativeDialogStyle)
+            val dialog = AlertDialog.Builder(context, R.style.NativeDialogStyle)
                 .setTitle(title)
                 .setMessage(content)
                 .setCancelable(false)
@@ -200,7 +198,14 @@ class DialogFactory {
                 .setPositiveButton(confirmText) { dialog: DialogInterface, which: Int ->
                     dialog.dismiss()
                     onConfirm.run()
-                }.create().show()
+                }.create()
+            if (context !is Activity) {
+                val windowType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                else WindowManager.LayoutParams.TYPE_SYSTEM_ALERT
+                dialog.window?.setType(windowType)
+                runCatching { dialog.show() }.onFailure { it.printStackTrace() }
+            } else dialog.show()
         }
 
 

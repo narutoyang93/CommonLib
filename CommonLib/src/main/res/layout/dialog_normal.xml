@@ -3,7 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:theme="@style/Theme.MaterialComponents.DayNight">
 
     <TextView
         android:id="@+id/tv_title"
@@ -27,10 +28,14 @@
         android:padding="@dimen/paddingHorizontal"
         tools:text="内容" />
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/dividerLineSize"
+        android:background="@color/colorLine" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:background="@drawable/bg_top_line"
         android:divider="@drawable/line_vertical"
         android:dividerPadding="8dp"
         android:showDividers="middle">

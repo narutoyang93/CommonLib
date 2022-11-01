@@ -4,7 +4,7 @@
     <style name="NativeDialogStyle" parent="Theme.MaterialComponents.DayNight.Dialog.Alert" />
 
     <!-- 默认弹窗样式-->
-    <style name="DefaultDialogStyle" parent="Theme.MaterialComponents.DayNight.Dialog">
+    <style name="DefaultDialogStyle" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
         <item name="dialogCornerRadius">@dimen/dialog_corner_radius</item>
         <item name="android:windowMinWidthMajor">60%</item>
         <item name="android:windowMinWidthMinor">90%</item>
