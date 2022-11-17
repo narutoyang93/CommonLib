@@ -87,10 +87,7 @@ class DialogFactory {
                     confirmText = ResText(R.string.text_go_to_setting),
                     cancelListener = { view, dialog -> onCancel() },
                     confirmListener = { view, dialog ->
-                        contextBridge.starActivityForResult(
-                            intent,
-                            activityResultCallback
-                        )
+                        contextBridge.starActivityForResult(intent, activityResultCallback)
                     })
             )
         }

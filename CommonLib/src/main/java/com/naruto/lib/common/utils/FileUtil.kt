@@ -774,11 +774,10 @@ object FileUtil {
 
     /**
      * 删除外部公共空间的文件
-     *
-     * @param mediaType
-     * @param relativePath
-     * @param fileName
-     * @return
+     * @param mediaType MediaType
+     * @param relativePath String
+     * @param filter MyFileFilter
+     * @return Boolean
      */
     fun deleteFileInExternalPublicSpace(
         mediaType: MediaType, relativePath: String, filter: MyFileFilter
@@ -813,11 +812,9 @@ object FileUtil {
     fun deleteFileInExternalPublicSpace(
         mediaType: MediaType, relativePath: String, fileName: String
     ): Boolean {
-        return if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-            val filePath: String =
-                getPathFromExternalPublicSpace(mediaType, relativePath) + fileName
-            delete(filePath)
-        } else {
+        return if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P)
+            delete((getPathFromExternalPublicSpace(mediaType, relativePath) + fileName))
+        else {
             val args = arrayOf(fileName, getRelativePathInRoot(mediaType, relativePath))
             deleteFileInExternalPublicSpace(mediaType, SELECTION_SPECIFY_FILE, args) > 0
         }

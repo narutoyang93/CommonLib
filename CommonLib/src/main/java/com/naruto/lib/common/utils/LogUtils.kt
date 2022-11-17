@@ -46,6 +46,8 @@ object LogUtils {
     //是否写入文件
     var documentable: Boolean = false
         set(value) {
+            if (value == field) return
+            field = value
             runInCoroutine { CommonDataStore.setBooleanValue(DATASTORE_KEY_DOCUMENTABLE, value) }
         }
 
