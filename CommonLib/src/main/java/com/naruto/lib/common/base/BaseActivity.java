@@ -3,6 +3,8 @@ package com.naruto.lib.common.base;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -14,9 +16,12 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.LifecycleOwner;
 
+import com.naruto.lib.common.Global;
 import com.naruto.lib.common.R;
 import com.naruto.lib.common.helper.PermissionHelper;
+import com.naruto.lib.common.utils.DeviceInfoUtil;
 import com.naruto.lib.common.utils.DialogFactory;
+import com.naruto.lib.common.utils.LogUtils;
 
 import java.util.List;
 
@@ -58,6 +63,34 @@ public abstract class BaseActivity extends AppCompatActivity implements BaseView
     @Override
     public Context getContext() {
         return this;
+    }
+
+    protected boolean keepFontSize() {
+        return Global.INSTANCE.isKeepFontSize();
+    }
+
+    @Override
+    public Resources getResources() {
+        if (!keepFontSize()) return super.getResources();
+        Resources resources = super.getResources();
+        Configuration config = resources.getConfiguration();
+        boolean needReset = false;
+        if (config.fontScale != 1.0f) {
+            LogUtils.INSTANCE.i("--->fontScale=" + config.fontScale);
+            config.fontScale = 1.0f;
+            needReset = true;
+        }
+        int defDensityDpi = DeviceInfoUtil.INSTANCE.getDefaultDisplayDensity();
+        if (config.densityDpi != defDensityDpi && defDensityDpi != -1) {
+            config.densityDpi = defDensityDpi;
+            needReset = true;
+        }
+        //super.getResources().apply {updateConfiguration(config, displayMetrics)  }
+        if (needReset) {
+            config.uiMode = Configuration.UI_MODE_TYPE_UNDEFINED;
+            return createConfigurationContext(config).getResources();
+        }
+        return resources;
     }
 
     /**

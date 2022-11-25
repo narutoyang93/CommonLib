@@ -63,6 +63,8 @@ object Global {
 
     var isDebug: Boolean = true
 
+    var isKeepFontSize: Boolean = false//是否屏蔽系统字体大小设置，保持字体大小不随系统改变
+
     fun toast(msg: String, shortDuration: Boolean = true) {
         runOnMainThread {
             val duration = if (shortDuration) Toast.LENGTH_SHORT else Toast.LENGTH_LONG
