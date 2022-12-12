@@ -3,6 +3,7 @@
 
     <style name="Def" parent="Theme.MaterialComponents.DayNight">
         <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primaryDark</item>
     </style>
     <!--系统原生弹窗样式-->
     <style name="NativeDialogStyle" parent="Theme.MaterialComponents.DayNight.Dialog.Alert" />

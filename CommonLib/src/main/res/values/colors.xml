@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--主题色-->
-    <color name="primary">#FF6200EE</color>
+    <color name="primary">@color/design_default_color_primary</color>
+    <color name="primaryDark">@color/design_default_color_primary_dark</color>
     <!--分割线颜色-->
     <color name="colorLine">#E1E1E1</color>
     <color name="black">#FF000000</color>
