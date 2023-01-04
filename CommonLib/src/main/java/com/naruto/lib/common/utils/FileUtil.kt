@@ -198,6 +198,16 @@ object FileUtil {
 
 
     /**
+     * 读取文件内容
+     * @param uri Uri
+     * @param block Function1<InputStream?, Unit>
+     */
+    fun readDataFromFile(uri: Uri, block: (InputStream?) -> Unit) {
+        doWithStoragePermission { getContentResolver().openInputStream(uri).use { block(it) } }
+    }
+
+
+    /**
      * 截取视图保存文件
      */
     fun saveViewToFile(view: View, fileUri: Uri) {
