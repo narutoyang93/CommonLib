@@ -203,7 +203,10 @@ object FileUtil {
      * @param block Function1<InputStream?, Unit>
      */
     fun readDataFromFile(uri: Uri, block: (InputStream?) -> Unit) {
-        doWithStoragePermission { getContentResolver().openInputStream(uri).use { block(it) } }
+        val func = { getContentResolver().openInputStream(uri).use { block(it) } }
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+            doWithStoragePermission({ func() }, { block(null) })
+        } else func()
     }
 
 
@@ -448,11 +451,11 @@ object FileUtil {
         }
         val mediaData: MediaData = getMediaStoreData(mediaType)
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
-            doWithStoragePermission {
+            doWithStoragePermission({
                 val folderPath: String =
                     getPathFromExternalPublicSpace(mediaData.directory!!, relativePath)
                 callback(createFile(folderPath, fileName))
-            }
+            },{callback(null)})
         } else {
             kotlin.runCatching {
                 val path = getRelativePathInRoot(mediaData.directory!!, relativePath)
@@ -797,7 +800,7 @@ object FileUtil {
                 ?.run {
                     filter.fileFilter?.let { listFiles(it) } ?: listFiles(filter.filenameFilter!!)
                         ?.let { files ->
-                            doWithStoragePermission { files.forEach { it.delete() } }
+                            doWithStoragePermission({ files.forEach { it.delete() } })
                         }
                 }
             true
@@ -943,10 +946,16 @@ object FileUtil {
      *
      * @param operation
      */
-    fun doWithStoragePermission(autoRequest: Boolean = true, operation: () -> Unit) {
+    fun doWithStoragePermission(
+        operation: () -> Unit, onDenied: (() -> Unit)? = null, autoRequest: Boolean = true
+    ) {
         Global.doWithPermission(
             object : PermissionHelper.RequestPermissionsCallback(Pair(null, permissions)) {
                 override fun onGranted() = operation()
+                override fun onDenied(context: Context?, deniedPermissions: MutableList<String>?) {
+                    onDenied?.invoke()
+                    super.onDenied(context, deniedPermissions)
+                }
             }.apply { setAutoRequest(autoRequest) })
     }
 

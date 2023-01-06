@@ -38,7 +38,7 @@ abstract class CrashHandler : Thread.UncaughtExceptionHandler {
 
     override fun uncaughtException(t: Thread, e: Throwable) {
         if (Global.isDebug) return
-        FileUtil.doWithStoragePermission(false) {
+        FileUtil.doWithStoragePermission({
             saveLogInfo("crash", e) {
 /*                MyApplication.doByActivity { activity ->
                     DialogFactory.showHintDialog(
@@ -49,7 +49,7 @@ abstract class CrashHandler : Thread.UncaughtExceptionHandler {
                 showCrashToast()
                 restartApp()
             }
-        }
+        }, autoRequest = false)
     }
 
     /**
@@ -69,9 +69,9 @@ abstract class CrashHandler : Thread.UncaughtExceptionHandler {
      * @param e
      */
     fun saveExceptionInfo(e: Throwable) {
-        if (!Global.isDebug) FileUtil.doWithStoragePermission(false) {
+        if (!Global.isDebug) FileUtil.doWithStoragePermission({
             saveLogInfo("exception", e, null)
-        }
+        }, autoRequest = false)
     }
 
     /**
