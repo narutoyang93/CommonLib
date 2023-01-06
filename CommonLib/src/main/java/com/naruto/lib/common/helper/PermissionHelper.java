@@ -376,4 +376,10 @@ public abstract class PermissionHelper implements ContextBridge {
     public interface Operation<T> {
         void execute(T t);
     }
+
+    public static PermissionHelper getDefault(Activity activity) {
+        if (activity instanceof ComponentActivity)
+            return new NormalActivityPermissionHelper((ComponentActivity) activity);
+        return new LegacyActivityPermissionHelper(activity);
+    }
 }
