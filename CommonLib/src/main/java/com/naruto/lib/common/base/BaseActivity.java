@@ -42,7 +42,7 @@ public abstract class BaseActivity extends AppCompatActivity implements BaseView
         setContentView(getLayoutRes());
         rootView = ((ViewGroup) getWindow().getDecorView().findViewById(android.R.id.content)).getChildAt(0);
 
-        init();
+        ((BaseView)this).init();//转类型是为了防止kotlin调用时代码混淆后导致与kotlin的init代码块冲突
     }
 
     @Override
