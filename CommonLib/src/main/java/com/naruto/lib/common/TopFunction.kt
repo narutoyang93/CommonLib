@@ -1,6 +1,8 @@
 package com.naruto.lib.common.TopFunction
 
 import android.os.Build
+import androidx.annotation.StringRes
+import com.naruto.lib.common.Global
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -31,3 +33,5 @@ fun runInCoroutine(
 ) {
     CoroutineScope(dispatcher).launch(block = block)
 }
+
+fun getResString(@StringRes resId: Int) = Global.getMainModuleContext().getString(resId)

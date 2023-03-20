@@ -17,9 +17,9 @@ import androidx.annotation.IdRes
 import androidx.annotation.LayoutRes
 import androidx.annotation.StyleRes
 import androidx.appcompat.app.AlertDialog
+import androidx.core.view.isVisible
 import com.naruto.lib.common.R
-import com.naruto.lib.common.ResText
-import com.naruto.lib.common.TextParam
+import com.naruto.lib.common.TopFunction.getResString
 import com.naruto.lib.common.base.ContextBridge
 import com.naruto.lib.common.utils.DialogFactory.OnDialogButtonClickListener
 
@@ -43,9 +43,9 @@ class DialogFactory {
          */
         @JvmOverloads
         fun showHintDialog(
-            context: Context, message: TextParam, title: TextParam? = null,
+            context: Context, message: String, title: String? = null,
             contentGravityCenter: Boolean = true,
-            confirmText: TextParam = ResText(R.string.text_confirm),
+            confirmText: String = getResString(R.string.text_confirm),
             onConfirmListener: (() -> Unit)? = null,
             viewProcessor: ((AlertDialog, View) -> Unit)? = null
         ): AlertDialog {
@@ -78,15 +78,15 @@ class DialogFactory {
          * @return
          */
         fun createGoSettingDialog(
-            contextBridge: ContextBridge, title: TextParam, message: TextParam, intent: Intent,
+            contextBridge: ContextBridge, title: String, message: String, intent: Intent,
             onCancel: () -> Unit, activityResultCallback: ActivityResultCallback<ActivityResult>
         ): AlertDialog {
             return createActionDialog(
                 contextBridge.context, ActionDialogOption(
                     title = title, content = message,
-                    confirmText = ResText(R.string.text_go_to_setting),
-                    cancelListener = { view, dialog -> onCancel() },
-                    confirmListener = { view, dialog ->
+                    confirmText = getResString(R.string.text_go_to_setting),
+                    cancelListener = { _, _ -> onCancel() },
+                    confirmListener = { _, _ ->
                         contextBridge.starActivityForResult(intent, activityResultCallback)
                     })
             )
@@ -103,9 +103,9 @@ class DialogFactory {
          */
         @JvmOverloads
         fun createActionDialog(
-            context: Context, content: TextParam,
+            context: Context, content: String,
             confirmListener: OnDialogButtonClickListener,
-            title: TextParam? = null, viewProcessor: ((AlertDialog, View) -> Unit)? = null
+            title: String? = null, viewProcessor: ((AlertDialog, View) -> Unit)? = null
         ): AlertDialog {
             val option = ActionDialogOption(
                 title = title, content = content, confirmListener = confirmListener
@@ -215,19 +215,13 @@ class DialogFactory {
          * @param onClickListener OnDialogButtonClickListener?
          */
         private fun setActionButton(
-            dialog: AlertDialog, dialogView: View, viewId: Int, text: TextParam?,
+            dialog: AlertDialog, dialogView: View, viewId: Int, text: String?,
             onClickListener: OnDialogButtonClickListener?
         ) {
-            doWithTextView(dialogView, viewId) {
-                if (text == null) it.visibility = View.GONE
-                else {
-                    text.setToTextView(it)
-                    it.visibility = View.VISIBLE
-                    //设置点击监听
-                    dialogView.findViewById<View>(viewId)?.setOnClickListener { v ->
-                        if (onClickListener == null || onClickListener.dismissible()) dialog.dismiss()
-                        onClickListener?.onClick(v, dialog)
-                    }
+            setText(dialogView, viewId, text) {
+                it.setOnClickListener { v ->
+                    if (onClickListener == null || onClickListener.dismissible()) dialog.dismiss()
+                    onClickListener?.onClick(v, dialog)
                 }
             }
         }
@@ -239,11 +233,14 @@ class DialogFactory {
          * @param textViewId
          * @param text
          */
-        private fun setText(dialogView: View, textViewId: Int, text: TextParam?) {
-            if (text == null) return
+        private fun setText(
+            dialogView: View, textViewId: Int, text: String?, block: ((TextView) -> Unit)? = null
+        ) {
             doWithTextView(dialogView, textViewId) { textView ->
-                text.setToTextView(textView)
-                textView.visibility = View.VISIBLE
+                textView.isVisible = (text != null)
+                if (text == null) return@doWithTextView
+                textView.text = text
+                block?.invoke(textView)
             }
         }
 
@@ -264,11 +261,11 @@ class DialogFactory {
      * @Note
      */
     data class ActionDialogOption(
-        var title: TextParam? = null,//标题
-        val content: TextParam,//内容
-        var cancelText: TextParam? = ResText(R.string.text_cancel),//取消按钮文本
-        val confirmText: TextParam = ResText(R.string.text_confirm),//确定按钮文本
-        val neutralText: TextParam? = null,//中立（第三个）按钮文本
+        var title: String? = null,//标题
+        val content: String,//内容
+        var cancelText: String? = getResString(R.string.text_cancel),//取消按钮文本
+        val confirmText: String = getResString(R.string.text_confirm),//确定按钮文本
+        val neutralText: String? = null,//中立（第三个）按钮文本
         var contentGravityCenter: Boolean = true,//内容文本是否居中
         var cancelListener: OnDialogButtonClickListener? = null,
         var confirmListener: OnDialogButtonClickListener? = null,
@@ -282,7 +279,7 @@ class DialogFactory {
         @IdRes var confirmViewId: Int = R.id.btn_confirm,
         @IdRes var neutralViewId: Int = R.id.btn_neutral//中立（第三个）按钮ID
     ) {
-        constructor(content: TextParam, confirmText: TextParam)
+        constructor(content: String, confirmText: String)
                 : this(null, content = content, confirmText = confirmText)
     }
 

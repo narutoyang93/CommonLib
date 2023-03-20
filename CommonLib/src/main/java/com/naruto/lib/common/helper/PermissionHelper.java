@@ -1,5 +1,7 @@
 package com.naruto.lib.common.helper;
 
+import static com.naruto.lib.common.TopFunction.TopFunctionKt.getResString;
+
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
@@ -23,9 +25,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 
 import com.naruto.lib.common.Global;
-import com.naruto.lib.common.NormalText;
 import com.naruto.lib.common.R;
-import com.naruto.lib.common.ResText;
 import com.naruto.lib.common.base.ContextBridge;
 import com.naruto.lib.common.utils.DialogFactory;
 import com.naruto.lib.common.utils.LogUtils;
@@ -122,8 +122,8 @@ public abstract class PermissionHelper implements ContextBridge {
         Uri uri = Uri.fromParts("package", getContext().getPackageName(), null);
         intent.setData(uri);
         Global.INSTANCE.runOnMainThread(() -> {
-            DialogFactory.Companion.createGoSettingDialog(this, new ResText(R.string.dialog_title_def),
-                    new NormalText(requestPermissionReason + "，是否前往设置？"), intent
+            DialogFactory.Companion.createGoSettingDialog(this, getResString(R.string.dialog_title_def),
+                    requestPermissionReason + "，是否前往设置？", intent
                     , () -> {
                         callback.onDenied(getContext(), deniedPermissions);
                         return Unit.INSTANCE;
@@ -146,8 +146,8 @@ public abstract class PermissionHelper implements ContextBridge {
      * @return
      */
     private void showPermissionRequestReasonDialog(RequestPermissionsCallback callback, List<String> deniedPermissions, String requestPermissionReason) {
-        DialogFactory.ActionDialogOption dialogData = new DialogFactory.ActionDialogOption(new NormalText(requestPermissionReason), new ResText(R.string.text_grant));
-        dialogData.setTitle(new ResText(R.string.dialog_title_def));
+        DialogFactory.ActionDialogOption dialogData = new DialogFactory.ActionDialogOption(requestPermissionReason, getResString(R.string.text_grant));
+        dialogData.setTitle(getResString(R.string.dialog_title_def));
         dialogData.setCancelListener((view, dialog) -> callback.onDenied(getContext(), deniedPermissions));
         dialogData.setConfirmListener((view, dialog) -> doWithPermission(callback));
         Global.INSTANCE.runOnMainThread(() -> {

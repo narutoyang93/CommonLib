@@ -23,7 +23,6 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.documentfile.provider.DocumentFile
 import com.naruto.lib.common.Global
-import com.naruto.lib.common.NormalText
 import com.naruto.lib.common.TopFunction.runInCoroutine
 import com.naruto.lib.common.helper.PermissionHelper
 import kotlinx.coroutines.flow.first
@@ -455,7 +454,7 @@ object FileUtil {
                 val folderPath: String =
                     getPathFromExternalPublicSpace(mediaData.directory!!, relativePath)
                 callback(createFile(folderPath, fileName))
-            },{callback(null)})
+            }, { callback(null) })
         } else {
             kotlin.runCatching {
                 val path = getRelativePathInRoot(mediaData.directory!!, relativePath)
@@ -710,9 +709,8 @@ object FileUtil {
                                 operation(df)
                             } else activity.runOnUiThread {
                                 val msg = "授权文件夹与目标文件夹不一致，请重新设置（设置局部权限时请勿选择其他文件夹）"
-                                DialogFactory.createActionDialog(
-                                    activity, NormalText(msg), this, NormalText("操作失败")
-                                ).show()
+                                DialogFactory.createActionDialog(activity, msg, this, "操作失败")
+                                    .show()
                             }
                         }
                     }
@@ -721,9 +719,8 @@ object FileUtil {
             //弹窗
             Global.doByActivity { activity ->
                 activity.runOnUiThread {
-                    DialogFactory.createActionDialog(
-                        activity, NormalText(message), confirmListener, NormalText("提示")
-                    ).show()
+                    DialogFactory.createActionDialog(activity, message, confirmListener, "提示")
+                        .show()
                 }
             }
         }

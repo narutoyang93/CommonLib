@@ -47,7 +47,7 @@ object Global {
     /**
      * 主Module的全局Context，需在主Module的Application中调用commonLibInit()初始化
      */
-    internal lateinit var getMainModuleContext: () -> Context
+    lateinit var getMainModuleContext: () -> Context
 
     /**
      * 应用名
