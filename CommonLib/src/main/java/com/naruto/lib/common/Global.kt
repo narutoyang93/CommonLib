@@ -5,6 +5,7 @@ import android.app.Application
 import android.content.Context
 import android.os.Bundle
 import android.os.Looper
+import android.util.Log
 import android.util.SparseArray
 import android.widget.Toast
 import androidx.annotation.DrawableRes
@@ -198,7 +199,8 @@ fun Application.commonLibInit() {
     registerActivityLifecycleCallbacks(Global.MyActivityLifecycleCallbacks())//监听activity生命周期
     Global.isDebug = kotlin.runCatching {
         Class.forName("$packageName.BuildConfig").getField("DEBUG").get(null) as Boolean
-    }.getOrDefault(true)
+    }.onFailure { Log.e("naruto","--->reflect error",it) }.getOrDefault(true)
+    LogUtils.init()
 }
 
 private var hasInitialized = false

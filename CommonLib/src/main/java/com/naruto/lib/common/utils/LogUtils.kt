@@ -19,13 +19,6 @@ import java.util.*
 private const val DATASTORE_KEY_DOCUMENTABLE = "documentable"
 
 object LogUtils {
-    init {
-        runInCoroutine {
-            CommonDataStore.getBooleanValue(DATASTORE_KEY_DOCUMENTABLE, false)
-                .collect { documentable = it }
-        }
-    }
-
     private const val DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss:SSS"
     private val defTag by lazy {
         Global.runCatching { appNameEN }.getOrDefault(Global.appName).toString()
@@ -47,6 +40,7 @@ object LogUtils {
     var documentable: Boolean = false
         set(value) {
             if (value == field) return
+            Log.i("naruto", "--->set value=$value")
             field = value
             runInCoroutine { CommonDataStore.setBooleanValue(DATASTORE_KEY_DOCUMENTABLE, value) }
         }
@@ -110,4 +104,11 @@ object LogUtils {
     }
 
     private fun getTodayDate() = todayDate("yyyy-MM-dd")
+
+    internal fun init() {
+        runInCoroutine {
+            CommonDataStore.getBooleanValue(DATASTORE_KEY_DOCUMENTABLE, false)
+                .collect { documentable = it; Log.i("naruto", "--->getBooleanValue: $it") }
+        }
+    }
 }
