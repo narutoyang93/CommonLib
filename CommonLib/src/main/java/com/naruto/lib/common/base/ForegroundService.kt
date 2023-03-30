@@ -8,6 +8,7 @@ import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.core.app.NotificationCompat
 import com.naruto.lib.common.Global
+import com.naruto.lib.common.utils.NotificationUtil
 import com.naruto.lib.common.utils.ServiceUtil
 
 
@@ -20,12 +21,13 @@ import com.naruto.lib.common.utils.ServiceUtil
 abstract class ForegroundService : BaseService() {
     private lateinit var notificationManager: NotificationManager
     private lateinit var notificationBuilder: NotificationCompat.Builder
+    protected open val notificationId = NotificationUtil.createNotificationId()
 
     override fun onCreate() {
         super.onCreate()
         notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationBuilder = ServiceUtil.setForegroundService(
-            this, getPendingIntent(), getNotificationId(), getNotificationIcon()
+            this, getPendingIntent(), notificationId, getNotificationIcon()
         ) { initNotification() }
     }
 
@@ -43,7 +45,7 @@ abstract class ForegroundService : BaseService() {
      */
     protected open fun updateNotification(operation: (NotificationCompat.Builder.() -> Unit)) {
         operation(notificationBuilder)
-        notificationManager.notify(getNotificationId(), notificationBuilder.build())
+        notificationManager.notify(notificationId, notificationBuilder.build())
     }
 
 
@@ -52,16 +54,12 @@ abstract class ForegroundService : BaseService() {
         super.onDestroy()
     }
 
-    protected abstract fun getNotificationId(): Int
-
     protected abstract fun getPendingIntent(): PendingIntent?
 
     @DrawableRes
     protected open fun getNotificationIcon(): Int = Global.notificationIcon
 
     companion object {
-        const val NOTIFICATION_ID_WIDGET = 1
-
         /**
          * 启动前台服务
          *

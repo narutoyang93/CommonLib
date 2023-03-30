@@ -18,6 +18,7 @@ import com.naruto.lib.common.TopFunction.isDomesticRom
  * @CreateDate 2022/8/5 0005
  * @Note
  */
+private var MAX_NOTIFICATION_ID = 100
 object NotificationUtil {
     @DrawableRes
     internal const val INVALID_ICON_RES = 0
@@ -86,4 +87,6 @@ object NotificationUtil {
         block(builder)
         sendNotification(context, notificationId, builder)
     }
+
+    fun createNotificationId(): Int = ++MAX_NOTIFICATION_ID
 }
