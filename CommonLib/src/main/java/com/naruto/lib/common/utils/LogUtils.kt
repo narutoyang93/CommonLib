@@ -40,7 +40,6 @@ object LogUtils {
     var documentable: Boolean = false
         set(value) {
             if (value == field) return
-            Log.i("naruto", "--->set value=$value")
             field = value
             runInCoroutine { CommonDataStore.setBooleanValue(DATASTORE_KEY_DOCUMENTABLE, value) }
         }
@@ -108,7 +107,7 @@ object LogUtils {
     internal fun init() {
         runInCoroutine {
             CommonDataStore.getBooleanValue(DATASTORE_KEY_DOCUMENTABLE, false)
-                .collect { documentable = it; Log.i("naruto", "--->getBooleanValue: $it") }
+                .collect { documentable = it }
         }
     }
 }

@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import androidx.annotation.DrawableRes
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.naruto.lib.common.Global
@@ -18,6 +19,8 @@ import com.naruto.lib.common.TopFunction.isDomesticRom
  * @Note
  */
 object NotificationUtil {
+    @DrawableRes
+    internal const val INVALID_ICON_RES = 0
 
     fun createAction(
         context: Context, icon: Int, title: CharSequence, action: String,
@@ -57,10 +60,9 @@ object NotificationUtil {
     fun createNotificationBuilder(
         context: Context, channelId: String = createNotificationChannel(context)
     ): NotificationCompat.Builder {
-        val icon = if (isDomesticRom() && Build.VERSION.SDK_INT < Build.VERSION_CODES.S) -1
-        else Global.notificationIcon
         return NotificationCompat.Builder(context, channelId).apply {
-            if (icon != -1) setSmallIcon(icon)
+            if (!isDomesticRom() || Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)//初始化时设置默认图标，允许外部覆盖
+                Global.notificationIcon.let { if (it != INVALID_ICON_RES) setSmallIcon(it) }
         }
     }
 
@@ -68,7 +70,7 @@ object NotificationUtil {
         context: Context, notificationId: Int, builder: NotificationCompat.Builder
     ) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && builder.build().smallIcon == null)
-            context.runCatching {
+            context.runCatching {//发送前检测到未设置图标，要么是外部设置图标错误（可能性很低），要么就是Global.notificationIcon==INVALID_ICON_RES，所以此处只能用应用图标
                 packageManager.getPackageInfo(packageName, 0).applicationInfo.icon
                     .let { builder.setSmallIcon(it) }
             }

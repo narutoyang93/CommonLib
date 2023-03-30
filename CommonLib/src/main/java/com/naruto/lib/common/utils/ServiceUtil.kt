@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import androidx.annotation.DrawableRes
 import androidx.core.app.NotificationCompat
-import com.naruto.lib.common.utils.LogUtils.w
 
 /**
  * @Description
@@ -35,8 +34,7 @@ object ServiceUtil {
     ): NotificationCompat.Builder {
         val builder = NotificationUtil.createNotificationBuilder(service)
             .setContentIntent(pendingIntent)
-        if (iconRes == -1) w("--->不setSmallIcon将会导致title和contentText不显示")
-        else builder.setSmallIcon(iconRes)
+        if (iconRes != -1) builder.setSmallIcon(iconRes)//createNotificationBuilder里已经设置了默认图标，所以只有当iconRes != -1时才需要覆盖
 
         block(builder)
         service.startForeground(notificationId, builder.build())

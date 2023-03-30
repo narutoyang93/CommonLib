@@ -14,6 +14,7 @@ import com.naruto.lib.common.activity.TaskActivity
 import com.naruto.lib.common.base.BaseActivity
 import com.naruto.lib.common.helper.PermissionHelper
 import com.naruto.lib.common.utils.LogUtils
+import com.naruto.lib.common.utils.NotificationUtil
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
@@ -34,7 +35,7 @@ object Global {
      * 通知图标
      */
     @DrawableRes
-    var notificationIcon: Int = -1
+    var notificationIcon: Int = NotificationUtil.INVALID_ICON_RES
 /*        get() {
             if (field == -1) throw Throwable("属性未初始化，请在主Module的Application中为其赋值")
             return field
