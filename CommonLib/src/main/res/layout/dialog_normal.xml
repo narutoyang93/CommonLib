@@ -55,7 +55,7 @@
         <TextView
             android:id="@+id/btn_confirm"
             style="@style/DialogButtonStyle"
-            android:textColor="?android:colorPrimary"
+            android:textColor="?colorPrimary"
             tools:text="确定" />
     </LinearLayout>
 

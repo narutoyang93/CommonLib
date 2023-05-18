@@ -57,13 +57,7 @@ class DialogFactory {
             )
 
             val dialog = createActionDialog(context, option, viewProcessor)
-            if (context !is Activity) {
-                val windowType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-                else WindowManager.LayoutParams.TYPE_SYSTEM_ALERT
-                dialog.window?.setType(windowType)
-                runCatching { dialog.show() }.onFailure { it.printStackTrace() }
-            } else dialog.show()
+            if (context !is Activity) dialog.showWithoutActivity() else dialog.show()
             return dialog
         }
 
@@ -181,12 +175,22 @@ class DialogFactory {
          */
         @JvmOverloads
         fun showNativeDialog(
-            context: Context, title: String, content: String, cancelText: String = "取消",
+            context: Context, title: String?, content: String, cancelText: String = "取消",
             confirmText: String = "确定", onCancel: Runnable? = null, onConfirm: Runnable
         ) {
+            showNativeDialog(
+                context, title, { setMessage(content) }, cancelText, confirmText,
+                onCancel, onConfirm
+            )
+        }
+
+        @JvmOverloads
+        fun showNativeDialog(
+            context: Context, title: String?, option: AlertDialog.Builder.() -> Unit,
+            cancelText: String = "取消", confirmText: String = "确定",
+            onCancel: Runnable? = null, onConfirm: Runnable
+        ) {
             val dialog = AlertDialog.Builder(context, R.style.NativeDialogStyle)
-                .setTitle(title)
-                .setMessage(content)
                 .setCancelable(false)
                 .setNegativeButton(cancelText) { dialog: DialogInterface, which: Int ->
                     dialog.dismiss()
@@ -195,14 +199,8 @@ class DialogFactory {
                 .setPositiveButton(confirmText) { dialog: DialogInterface, which: Int ->
                     dialog.dismiss()
                     onConfirm.run()
-                }.create()
-            if (context !is Activity) {
-                val windowType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-                else WindowManager.LayoutParams.TYPE_SYSTEM_ALERT
-                dialog.window?.setType(windowType)
-                runCatching { dialog.show() }.onFailure { it.printStackTrace() }
-            } else dialog.show()
+                }.apply { if (!title.isNullOrEmpty()) setTitle(title);option() }.create()
+            if (context !is Activity) dialog.showWithoutActivity() else dialog.show()
         }
 
 
@@ -295,4 +293,16 @@ class DialogFactory {
         fun onClick(view: View, dialog: Dialog)
         fun dismissible(): Boolean = true//是否让弹窗dismiss
     }
+}
+
+/**
+ * 以系统弹窗的方式（不需要activity）弹出弹窗
+ * @receiver AlertDialog
+ */
+fun AlertDialog.showWithoutActivity() {
+    val windowType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+    else WindowManager.LayoutParams.TYPE_SYSTEM_ALERT
+    window?.setType(windowType)
+    runCatching { show() }.onFailure { it.printStackTrace() }
 }
