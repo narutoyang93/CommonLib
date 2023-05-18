@@ -1,6 +1,7 @@
 package com.naruto.lib.common.utils
 
 import android.content.Context
+import android.nfc.Tag
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
 import androidx.datastore.preferences.preferencesDataStore
@@ -8,7 +9,13 @@ import com.naruto.lib.common.Global
 import com.naruto.lib.common.TopFunction.runInCoroutine
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.internal.SynchronizedObject
+import java.util.Timer
+import java.util.TimerTask
+import kotlin.concurrent.schedule
 
 /**
  * @Description
@@ -82,6 +89,24 @@ open class DataStoreHelper(private val dataStore: DataStore<Preferences>) {
         setValue(booleanPreferencesKey(key), value)
     }
 
+    fun getSetValue(key: String, def: Set<String> = setOf()): Flow<Set<String>> {
+        return getValue(stringSetPreferencesKey(key), def)
+    }
+
+    suspend fun setSetValue(key: String, value: Set<String>) {
+        setValue(stringSetPreferencesKey(key), value)
+    }
+
+    suspend fun writeSetValue(key: String, block: (Set<String>) -> Unit) {
+        val preferencesKey = stringSetPreferencesKey(key)
+        val set = getValue(preferencesKey, setOf()).first()
+        block(set)
+        setValue(preferencesKey, set)
+    }
+
+    inline fun <reified T> getOtherValue(key: String, def: T, crossinline transform: (String) -> T)
+            : Flow<T> = getStringValue(key).map { if (it.isEmpty()) def else transform(it) }
+
     /**
      * 获取DataStore数据并监听变化
      * @param key String
@@ -91,7 +116,7 @@ open class DataStoreHelper(private val dataStore: DataStore<Preferences>) {
     fun <T> listenDataStoreDataChange(
         key: String, func: DataStoreHelper.(String) -> Flow<T>, callback: (T) -> Unit
     ) {
-        runInCoroutine{
+        runInCoroutine {
             func(key).collect {
                 callback(it)
                 LogUtils.i("--->$key has changed：$it")
@@ -99,12 +124,44 @@ open class DataStoreHelper(private val dataStore: DataStore<Preferences>) {
         }
     }
 
+    suspend fun clear() {
+        dataStore.edit { it.clear() }
+    }
+
 
     private fun <T> getValue(key: Preferences.Key<T>, def: T): Flow<T> {
-        return dataStore.data.map { it[key] ?: def }
+        changeKeyList.add(key)//记录本次是哪个key需要触发Flow回调，防止一次set触发所有无关key
+        return dataStore.data.map { it[key] ?: def }.filter { changeKeyList.contains(key)}//防止一次set触发所有无关key
     }
 
     suspend fun <T> setValue(key: Preferences.Key<T>, value: T) {
+        changeKeyList.add(key)//记录本次是哪个key需要触发Flow回调，防止一次set触发所有无关key
         dataStore.edit { it[key] = value }
+    }
+
+    private val changeKeyList = ChangeList<Preferences.Key<*>>()
+
+    /**
+     * @Description
+     * @Author Naruto Yang
+     * @CreateDate 2023/5/17 0017
+     * @Note
+     */
+    private class ChangeList<T> {
+        private val list = mutableListOf<T>()
+        @Synchronized
+        fun add(t: T) {
+            list.add(t)
+            Timer().schedule(1000) { remove(t) }
+        }
+
+        @Synchronized
+        fun remove(t: T) {
+            list.remove(t)
+        }
+
+        @Synchronized
+        fun contains(t: T) = list.contains(t)
+
     }
 }
