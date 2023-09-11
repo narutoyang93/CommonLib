@@ -255,7 +255,7 @@ public abstract class PermissionHelper implements ContextBridge {
      * @CreateDate 2022/9/15 0015
      * @Note 需在OnResume前初始化
      */
-    public static class NormalActivityPermissionHelper extends ActivityPermissionHelper<ComponentActivity> {
+    private static class NormalActivityPermissionHelper extends ActivityPermissionHelper<ComponentActivity> {
         private final ActivityResultLauncher<String[]> permissionLauncher;//权限申请启动器
         private ActivityResultCallback<Map<String, Boolean>> permissionCallback;//权限申请回调
         private final ActivityResultLauncher<Intent> activityLauncher;//Activity启动器
@@ -266,16 +266,18 @@ public abstract class PermissionHelper implements ContextBridge {
             //注册权限申请启动器
             permissionLauncher = activity.registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(),
                     result -> {
-                        permissionCallback.onActivityResult(result);
-                        permissionCallback = null;
+                        ActivityResultCallback<Map<String, Boolean>> callback = permissionCallback;
+                        permissionCallback = null;//为确保callback顺序执行，一定要在回调前置null，防止因为回调内又执行requestPermissions导致异常
+                        callback.onActivityResult(result);
                     });
 
             //注册权限申请启动器
             activityLauncher = activity.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
                     result -> {//Android 12及以上，跳转到设置页面后，在设置界面可以改变位置信息使用权，如果从确切位置降级到大致位置，系统会重启应用的进程，则activityCallback==null。但依旧会走到这里，故需判断activityCallback是否为空
                         if (activityCallback != null) {
-                            activityCallback.onActivityResult(result);
-                            activityCallback = null;
+                            ActivityResultCallback<ActivityResult> callback = activityCallback;
+                            activityCallback = null;//为确保callback顺序执行，一定要在回调前置null，防止因为回调内又执行startActivityForResult导致异常
+                            callback.onActivityResult(result);
                         }
                     });
         }
@@ -310,7 +312,7 @@ public abstract class PermissionHelper implements ContextBridge {
      * @CreateDate 2022/9/9 0009
      * @Note 需要在Activity的onActivityResult和onRequestPermissionsResult里调用LegacyActivityPermissionHelper中对应方法
      */
-    public static class LegacyActivityPermissionHelper extends ActivityPermissionHelper<Activity> {
+    private static class LegacyActivityPermissionHelper extends ActivityPermissionHelper<Activity> {
         private final SparseArray<ActivityResultCallback<ActivityResult>> activityResultCallbackQueue = new SparseArray<>();
         private final SparseArray<ActivityResultCallback<Map<String, Boolean>>> permissionsResultCallbackQueue = new SparseArray<>();
 
@@ -377,7 +379,7 @@ public abstract class PermissionHelper implements ContextBridge {
         void execute(T t);
     }
 
-    public static PermissionHelper getDefault(Activity activity) {
+    public static PermissionHelper create(Activity activity) {
         if (activity instanceof ComponentActivity)
             return new NormalActivityPermissionHelper((ComponentActivity) activity);
         return new LegacyActivityPermissionHelper(activity);
