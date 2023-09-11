@@ -1,9 +1,16 @@
 package com.naruto.lib.common.utils
 
 import android.content.Context
-import android.nfc.Tag
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.*
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.doublePreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.naruto.lib.common.Global
 import com.naruto.lib.common.TopFunction.runInCoroutine
@@ -12,9 +19,8 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.internal.SynchronizedObject
+import kotlinx.coroutines.flow.onCompletion
 import java.util.Timer
-import java.util.TimerTask
 import kotlin.concurrent.schedule
 
 /**
@@ -30,7 +36,7 @@ const val DEF_FLOAT = -1.0f
 const val DEF_DOUBLE = -1.0
 const val DEF_BOOLEAN = false
 
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "MyData")
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore("MyData")
 
 object CommonDataStore : DataStoreHelper(Global.getMainModuleContext().dataStore)
 
@@ -116,12 +122,7 @@ open class DataStoreHelper(private val dataStore: DataStore<Preferences>) {
     fun <T> listenDataStoreDataChange(
         key: String, func: DataStoreHelper.(String) -> Flow<T>, callback: (T) -> Unit
     ) {
-        runInCoroutine {
-            func(key).collect {
-                callback(it)
-                LogUtils.i("--->$key has changed：$it")
-            }
-        }
+        runInCoroutine { func(key).collect { callback(it);LogUtils.i("--->$key has changed：$it") } }
     }
 
     suspend fun clear() {
@@ -131,7 +132,9 @@ open class DataStoreHelper(private val dataStore: DataStore<Preferences>) {
 
     private fun <T> getValue(key: Preferences.Key<T>, def: T): Flow<T> {
         changeKeyList.add(key)//记录本次是哪个key需要触发Flow回调，防止一次set触发所有无关key
-        return dataStore.data.map { it[key] ?: def }.filter { changeKeyList.contains(key)}//防止一次set触发所有无关key
+        return dataStore.data.map { it[key] ?: def }
+            .filter { changeKeyList.contains(key) }//防止一次set触发所有无关key
+            .onCompletion { if (it != null) LogUtils.e("--->", it) }
     }
 
     suspend fun <T> setValue(key: Preferences.Key<T>, value: T) {
@@ -149,6 +152,7 @@ open class DataStoreHelper(private val dataStore: DataStore<Preferences>) {
      */
     private class ChangeList<T> {
         private val list = mutableListOf<T>()
+
         @Synchronized
         fun add(t: T) {
             list.add(t)
