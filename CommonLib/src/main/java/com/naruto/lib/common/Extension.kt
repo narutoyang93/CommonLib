@@ -26,6 +26,10 @@ fun <E> SparseArray<E>.putIfAbsent(key: Int, value: E) {
     get(key) ?: kotlin.run { put(key, value) }
 }
 
+fun <E> SparseArray<E>.getOrPut(key: Int, defaultValue: () -> E): E {
+    return get(key) ?: defaultValue().also { put(key, it) }
+}
+
 private var AndroidID: String? = null
 
 @SuppressLint("HardwareIds")
