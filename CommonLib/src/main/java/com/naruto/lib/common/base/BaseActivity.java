@@ -17,7 +17,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.LifecycleOwner;
 
 import com.naruto.lib.common.Global;
-import com.naruto.lib.common.R;
 import com.naruto.lib.common.helper.PermissionHelper;
 import com.naruto.lib.common.utils.DeviceInfoUtil;
 import com.naruto.lib.common.utils.DialogFactory;
@@ -32,7 +31,7 @@ import java.util.List;
  * @Note
  */
 public abstract class BaseActivity extends AppCompatActivity implements BaseView {
-    private final PermissionHelper.NormalActivityPermissionHelper permissionHelper = new PermissionHelper.NormalActivityPermissionHelper(this);
+    private final PermissionHelper permissionHelper = PermissionHelper.create(this);
     public AlertDialog loadingDialog;//加载弹窗
     protected View rootView;//根布局，即getLayoutRes()返回的布局
 
@@ -42,7 +41,7 @@ public abstract class BaseActivity extends AppCompatActivity implements BaseView
         setContentView(getLayoutRes());
         rootView = ((ViewGroup) getWindow().getDecorView().findViewById(android.R.id.content)).getChildAt(0);
 
-        ((BaseView)this).init();//转类型是为了防止kotlin调用时代码混淆后导致与kotlin的init代码块冲突
+        ((BaseView) this).init();//转类型是为了防止kotlin调用时代码混淆后导致与kotlin的init代码块冲突
     }
 
     @Override
@@ -97,7 +96,7 @@ public abstract class BaseActivity extends AppCompatActivity implements BaseView
      * 展示等待对话框
      */
     public void showLoadingDialog() {
-        showLoadingDialog(getString(R.string.hint_loading));
+        showLoadingDialog(null);
     }
 
     /**
@@ -105,8 +104,7 @@ public abstract class BaseActivity extends AppCompatActivity implements BaseView
      */
     public void showLoadingDialog(String msg) {
         if (loadingDialog == null) {
-            loadingDialog = DialogFactory.Companion.createDialog(this, R.layout.dialog_loading, null, R.style.LoadingDialogStyle);
-            loadingDialog.getWindow().setDimAmount(0f);//移除遮罩层
+            loadingDialog = DialogFactory.Companion.createLoadingDialog(this);
             loadingDialog.setCancelable(false);
         }
         if (!TextUtils.isEmpty(msg)) loadingDialog.setMessage(msg);

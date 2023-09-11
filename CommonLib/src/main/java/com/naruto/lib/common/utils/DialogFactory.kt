@@ -31,6 +31,12 @@ import com.naruto.lib.common.utils.DialogFactory.OnDialogButtonClickListener
  */
 class DialogFactory {
     companion object {
+        @JvmOverloads
+        fun createLoadingDialog(
+            context: Context, msg: String = getResString(R.string.hint_loading)
+        ) = createDialog(context, R.layout.dialog_loading, themeResId = R.style.LoadingDialogStyle)
+            .also { it.setMessage(msg);it.window?.setDimAmount(0f) }//移除遮罩层
+
         /**
          * 弹窗提示信息
          * @param context Context
@@ -263,7 +269,7 @@ class DialogFactory {
         val content: String,//内容
         var cancelText: String? = getResString(R.string.text_cancel),//取消按钮文本
         val confirmText: String = getResString(R.string.text_confirm),//确定按钮文本
-        val neutralText: String? = null,//中立（第三个）按钮文本
+        var neutralText: String? = null,//中立（第三个）按钮文本
         var contentGravityCenter: Boolean = true,//内容文本是否居中
         var cancelListener: OnDialogButtonClickListener? = null,
         var confirmListener: OnDialogButtonClickListener? = null,
@@ -288,7 +294,6 @@ class DialogFactory {
      * @CreateDate 2022/9/22 0022
      * @Note
      */
-    @JvmDefaultWithoutCompatibility
     fun interface OnDialogButtonClickListener {
         fun onClick(view: View, dialog: Dialog)
         fun dismissible(): Boolean = true//是否让弹窗dismiss
