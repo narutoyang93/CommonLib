@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Def" parent="Theme.MaterialComponents.DayNight">
+    <style name="Def" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primaryDark</item>
     </style>
     <!--系统原生弹窗样式-->
-    <style name="NativeDialogStyle" parent="Theme.MaterialComponents.DayNight.Dialog.Alert" />
+    <style name="NativeDialogStyle" parent="Theme.Material3.DayNight.Dialog.Alert" />
 
     <!-- 默认弹窗样式-->
-    <style name="DefaultDialogStyle" parent="Theme.MaterialComponents.DayNight.Dialog.Alert">
+    <style name="DefaultDialogStyle" parent="Theme.Material3.DayNight.Dialog.Alert">
         <item name="dialogCornerRadius">@dimen/dialog_corner_radius</item>
         <item name="android:windowMinWidthMajor">60%</item>
         <item name="android:windowMinWidthMinor">90%</item>
     </style>
 
     <!--加载弹窗样式-->
-    <style name="LoadingDialogStyle" parent="Theme.MaterialComponents.DayNight.Dialog">
+    <style name="LoadingDialogStyle" parent="Theme.Material3.DayNight.Dialog">
         <item name="dialogCornerRadius">@dimen/dialog_corner_radius</item>
     </style>
 
@@ -38,7 +38,7 @@
     </style>
 
     <!-- 透明Activity -->
-    <style name="TranslucentActivity" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+    <style name="TranslucentActivity" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:windowIsTranslucent">true</item>
