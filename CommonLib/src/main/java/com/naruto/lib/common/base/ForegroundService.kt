@@ -1,12 +1,12 @@
 package com.naruto.lib.common.base
 
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import com.naruto.lib.common.Global
 import com.naruto.lib.common.utils.NotificationUtil
 import com.naruto.lib.common.utils.ServiceUtil
@@ -19,13 +19,12 @@ import com.naruto.lib.common.utils.ServiceUtil
  * @Note
  */
 abstract class ForegroundService : BaseService() {
-    private lateinit var notificationManager: NotificationManager
+    private val notificationManager by lazy { NotificationManagerCompat.from(this) }
     private lateinit var notificationBuilder: NotificationCompat.Builder
     protected open val notificationId = NotificationUtil.createNotificationId()
 
     override fun onCreate() {
         super.onCreate()
-        notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         notificationBuilder = ServiceUtil.setForegroundService(
             this, getPendingIntent(), notificationId, getNotificationIcon()
         ) { initNotification() }

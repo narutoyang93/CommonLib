@@ -3,6 +3,7 @@ package com.naruto.lib.common
 import android.app.Activity
 import android.app.Application
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
@@ -148,6 +149,18 @@ object Global {
     }
 
     /**
+     * 获取在AndroidManifest.xml中配置的metaData
+     * @param context Context
+     * @param key String
+     * @return Result<String?>
+     */
+    fun getMetaData(context: Context, key: String): Result<String?> =
+        context.runCatching {
+            packageManager.getApplicationInfo(packageName, PackageManager.GET_META_DATA)
+                .metaData.getString(key)
+        }
+
+    /**
      * @Description
      * @Author Naruto Yang
      * @CreateDate 2022/7/7 0007
@@ -200,7 +213,7 @@ fun Application.commonLibInit() {
     registerActivityLifecycleCallbacks(Global.MyActivityLifecycleCallbacks())//监听activity生命周期
     Global.isDebug = kotlin.runCatching {
         Class.forName("$packageName.BuildConfig").getField("DEBUG").get(null) as Boolean
-    }.onFailure { Log.e("naruto","--->reflect error",it) }.getOrDefault(true)
+    }.onFailure { Log.e("naruto", "--->reflect error", it) }.getOrDefault(true)
     LogUtils.init()
 }
 
