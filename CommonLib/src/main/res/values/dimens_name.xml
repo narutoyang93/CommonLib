@@ -4,5 +4,5 @@
     <dimen name="dialog_corner_radius">@dimen/dp_10</dimen>
     <dimen name="dividerLineSize">@dimen/dp_0_5</dimen>
     <dimen name="dialog_min_height">@dimen/dp_80</dimen>
-    <dimen name="dialog_button_text_size">@dimen/dp_17</dimen>
+    <dimen name="dialog_button_text_size">@dimen/sp_17</dimen>
 </resources>

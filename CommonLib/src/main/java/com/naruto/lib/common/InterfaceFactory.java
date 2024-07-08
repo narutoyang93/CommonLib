@@ -8,20 +8,20 @@ package com.naruto.lib.common;
  */
 public class InterfaceFactory {
 
-    public interface SimpleOperation {
-        void done();
-    }
-
-    public interface Operation<T> {
-        void done(T t);
-    }
-
-    public interface Func<T,R> {
+    public interface Func<T, R> {
         R execute(T t);
     }
 
     public interface Func0<T> {
         T execute();
+    }
+
+    public interface Func0E<T> {
+        T execute() throws Exception;
+    }
+
+    public interface Func0E_S{
+        void execute() throws Exception;
     }
 
     /**

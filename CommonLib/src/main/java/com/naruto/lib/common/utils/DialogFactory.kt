@@ -18,10 +18,10 @@ import androidx.annotation.LayoutRes
 import androidx.annotation.StyleRes
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
+import androidx.core.view.updatePadding
 import com.naruto.lib.common.R
 import com.naruto.lib.common.TopFunction.getResString
 import com.naruto.lib.common.base.ContextBridge
-import com.naruto.lib.common.utils.DialogFactory.OnDialogButtonClickListener
 
 /**
  * @Description 构建弹窗
@@ -34,8 +34,11 @@ class DialogFactory {
         @JvmOverloads
         fun createLoadingDialog(
             context: Context, msg: String = getResString(R.string.hint_loading)
-        ) = createDialog(context, R.layout.dialog_loading, themeResId = R.style.LoadingDialogStyle)
-            .also { it.setMessage(msg);it.window?.setDimAmount(0f) }//移除遮罩层
+        ) = createDialog(
+            context, R.layout.dialog_loading,
+            { _, v -> v.updatePadding(bottom = context.resources.getDimensionPixelSize(com.google.android.material.R.dimen.m3_alert_dialog_title_bottom_margin)) },
+            R.style.LoadingDialogStyle
+        ).also { it.setMessage(msg);it.window?.setDimAmount(0f)/*移除遮罩层*/ }
 
         /**
          * 弹窗提示信息
@@ -133,7 +136,7 @@ class DialogFactory {
                 setText(view, option.contentViewId, option.content)
                 if (!option.contentGravityCenter)
                     doWithTextView(view, option.contentViewId) { it.gravity = Gravity.LEFT }
-
+                //按钮
                 with(option) {
                     setActionButton(dialog, view, cancelViewId, cancelText, cancelListener)//取消按钮
                     setActionButton(dialog, view, confirmViewId, confirmText, confirmListener)//确定按钮

@@ -23,7 +23,7 @@ fun currentDateTime(pattern: String = "yyyy/MM/dd HH:mm:ss"): String =
 
 fun isDomesticRom(): Boolean {
     return when (Build.MANUFACTURER.uppercase()) {
-        "HUAWEI", "HONOR", "XIAOMI", "OPPO", "VIVO" -> true
+        "HUAWEI", "HONOR", "XIAOMI", "REDMI", "OPPO", "REALME", "VIVO", "IQQO" -> true
         else -> false
     }
 }
