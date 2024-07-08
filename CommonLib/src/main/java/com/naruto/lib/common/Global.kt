@@ -37,10 +37,10 @@ object Global {
      */
     @DrawableRes
     var notificationIcon: Int = NotificationUtil.INVALID_ICON_RES
-/*        get() {
-            if (field == -1) throw Throwable("属性未初始化，请在主Module的Application中为其赋值")
-            return field
-        }*/
+    /*        get() {
+                if (field == -1) throw Throwable("属性未初始化，请在主Module的Application中为其赋值")
+                return field
+            }*/
 
     /**
      * 应用英文名或缩写，用于创建文件夹等，需在主Module的Application中为其赋值
@@ -218,3 +218,5 @@ fun Application.commonLibInit() {
 }
 
 private var hasInitialized = false
+
+class Box<T>(var data: T)

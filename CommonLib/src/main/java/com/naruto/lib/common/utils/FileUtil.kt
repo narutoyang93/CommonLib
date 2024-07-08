@@ -67,6 +67,7 @@ object FileUtil {
                 fileName ?: throw Exception("FileName is required.")
                 Intent.ACTION_CREATE_DOCUMENT
             }
+
             Operation.OPEN -> Intent.ACTION_OPEN_DOCUMENT
             else -> Intent.ACTION_OPEN_DOCUMENT_TREE
         }
@@ -124,9 +125,11 @@ object FileUtil {
      * @param isAppend 是否追加模式
      * @return 输入流
      */
-    fun getOutputStream(uri: Uri?, isAppend: Boolean): OutputStream? {
-        return uri?.let { getContentResolver().openOutputStream(it, if (isAppend) "wa" else "rw") }
-    }
+    fun getOutputStream(uri: Uri?, isAppend: Boolean): OutputStream? =
+        getOutputStream(uri, if (isAppend) "wa" else "rw")
+
+    fun getOutputStream(uri: Uri?, mode: String): OutputStream? =
+        uri?.let { getContentResolver().openOutputStream(it, mode) }
 
     /**
      * 写文件
@@ -135,20 +138,27 @@ object FileUtil {
      * @param iOutputStream
      * @param callback      回调
      */
-    private fun writeDataToExternalPublicSpaceFile(
-        bytes: ByteArray, outputStreamProvider: (() -> OutputStream?),
+    fun writeData(
+        writeFunc: (OutputStream) -> Unit, outputStreamProvider: () -> OutputStream?,
         callback: ((Boolean) -> Unit)?
     ) {
         outputStreamProvider().use {
-            val result = if (it == null) false else {
-                it.write(bytes)
-                it.flush()
-                true
-            }
-            if (callback != null) callback(result)
+            val result = it?.run { writeFunc(this);flush();true } ?: false
+            callback?.invoke(result)
         }
     }
 
+    fun writeData(
+        bytes: ByteArray, outputStreamProvider: () -> OutputStream?, callback: ((Boolean) -> Unit)?
+    ) = writeData({ it.write(bytes) }, outputStreamProvider, callback)
+
+    fun writeData(
+        stream: ByteArrayOutputStream, outputStreamProvider: () -> OutputStream?,
+        callback: ((Boolean) -> Unit)?
+    ) = writeData({ stream.writeTo(it); stream.flush() }, outputStreamProvider, callback)
+
+    fun writeData(stream: ByteArrayOutputStream, outputUri: Uri, callback: ((Boolean) -> Unit)?) =
+        writeData(stream, { getOutputStream(outputUri, "w") }, callback)
 
     /**
      * 写文件
@@ -185,12 +195,12 @@ object FileUtil {
                         }
                     }
                     //写入数据
-                    writeDataToExternalPublicSpaceFile(
+                    writeData(
                         bytes, { getOutputStream(it, isAppend) }, callback
                     )
                 }
             }
-        } else writeDataToExternalPublicSpaceFile(
+        } else writeData(
             bytes, { getOutputStream(uri, isAppend) }, callback
         )
     }
@@ -254,24 +264,28 @@ object FileUtil {
                     MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
                 else MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
             }
+
             MediaType.IMAGE -> {
                 directory = Environment.DIRECTORY_PICTURES
                 contentUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
                     MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
                 else MediaStore.Images.Media.EXTERNAL_CONTENT_URI
             }
+
             MediaType.VIDEO -> {
                 directory = Environment.DIRECTORY_MOVIES
                 contentUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
                     MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
                 else MediaStore.Video.Media.EXTERNAL_CONTENT_URI
             }
+
             MediaType.FILE -> {
                 val volume = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
                     MediaStore.VOLUME_EXTERNAL_PRIMARY else "external_primary"
                 directory = Environment.DIRECTORY_DOCUMENTS
                 contentUri = MediaStore.Files.getContentUri(volume)
             }
+
             MediaType.DOWNLOAD -> {
                 directory = Environment.DIRECTORY_DOWNLOADS
                 contentUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
@@ -313,6 +327,17 @@ object FileUtil {
         else str.startsWith(ContentResolver.SCHEME_CONTENT + "://")
                 || str.startsWith(ContentResolver.SCHEME_ANDROID_RESOURCE + "://")
                 || str.startsWith(ContentResolver.SCHEME_FILE + "://")
+    }
+
+    /**
+     * 判断uri对应的资源是否存在
+     */
+    fun exists(uri: Uri?): Boolean {
+        if (uri == null) return false
+        //判断文件是否可以正常读写，以此来判断文件是否存在
+        return runCatching { getContentResolver().openInputStream(uri).use { it != null } }
+            .onFailure { it.printStackTrace() }
+            .getOrDefault(false)
     }
 
     /**
@@ -681,7 +706,8 @@ object FileUtil {
             }
 
             //前往授权
-            val message = "由于当前系统限制，访问外部非共享文件需获取局部访问权限，即将打开设置页面，请在打开的页面点击底部按钮"
+            val message =
+                "由于当前系统限制，访问外部非共享文件需获取局部访问权限，即将打开设置页面，请在打开的页面点击底部按钮"
             val confirmListener = object : DialogFactory.OnDialogButtonClickListener {
                 override fun onClick(view: View, dialog: Dialog) {
                     var rp = relativePath
@@ -708,7 +734,8 @@ object FileUtil {
                                 )
                                 operation(df)
                             } else activity.runOnUiThread {
-                                val msg = "授权文件夹与目标文件夹不一致，请重新设置（设置局部权限时请勿选择其他文件夹）"
+                                val msg =
+                                    "授权文件夹与目标文件夹不一致，请重新设置（设置局部权限时请勿选择其他文件夹）"
                                 DialogFactory.createActionDialog(activity, msg, this, "操作失败")
                                     .show()
                             }
