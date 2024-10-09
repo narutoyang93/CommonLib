@@ -3,6 +3,7 @@ package com.naruto.lib.common.utils
 import android.app.Activity
 import android.app.Dialog
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.DialogInterface
 import android.content.Intent
 import android.os.Build
@@ -22,6 +23,7 @@ import androidx.core.view.updatePadding
 import com.naruto.lib.common.R
 import com.naruto.lib.common.TopFunction.getResString
 import com.naruto.lib.common.base.ContextBridge
+import com.naruto.lib.common.utils.DialogFactory.OnDialogButtonClickListener
 
 /**
  * @Description 构建弹窗
@@ -64,10 +66,7 @@ class DialogFactory {
                 else OnDialogButtonClickListener { view, dialog -> onConfirmListener() },
                 cancelText = null, contentGravityCenter = contentGravityCenter
             )
-
-            val dialog = createActionDialog(context, option, viewProcessor)
-            if (context !is Activity) dialog.showWithoutActivity() else dialog.show()
-            return dialog
+            return createActionDialog(context, option, viewProcessor).apply { safetyShow() }
         }
 
         /**
@@ -209,7 +208,7 @@ class DialogFactory {
                     dialog.dismiss()
                     onConfirm.run()
                 }.apply { if (!title.isNullOrEmpty()) setTitle(title);option() }.create()
-            if (context !is Activity) dialog.showWithoutActivity() else dialog.show()
+            dialog.safetyShow()
         }
 
 
@@ -313,4 +312,9 @@ fun AlertDialog.showWithoutActivity() {
     else WindowManager.LayoutParams.TYPE_SYSTEM_ALERT
     window?.setType(windowType)
     runCatching { show() }.onFailure { it.printStackTrace() }
+}
+
+fun AlertDialog.safetyShow() {
+    val c = ((context as ContextWrapper).baseContext as ContextWrapper).baseContext
+    if (c !is Activity) showWithoutActivity() else show()
 }
